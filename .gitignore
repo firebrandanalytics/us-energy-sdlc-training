@@ -1,0 +1,22 @@
+# Python
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+dist/
+build/
+
+# Local data & secrets
+*.db
+*.sqlite
+*.sqlite3
+.env
+
+# OS / editor noise
+.DS_Store
+
+# keep the committed training dataset (overrides the *.sqlite ignore)
+!data/us_energy.sqlite
