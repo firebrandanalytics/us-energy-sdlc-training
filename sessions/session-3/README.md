@@ -53,8 +53,8 @@ comments describe what it used to do, not what it does now.
 
 ## Agenda (2 hours)
 
-1. **Share-back from Homework #1** (~10 min) — one win, one snag from running
-   Claude Code on a real task.
+1. **Share-back from Homework #1** (~10 min) — a new command-line technique you
+   learned from the agent: what it does, and when you'd use it.
 2. **Meet the dataset** (~15 min) — a tour of the fuel-movements database
    (terminals, lifts, RIN credits) and how to open it.
 3. **Comprehending a query you didn't write** (~25 min) — the agent explains
@@ -90,7 +90,7 @@ we reach the lab.
 
   You should see seven tables. If `sqlite3` isn't installed, the Python path in
   [`../../data/README.md`](../../data/README.md) works with no extra installs.
-- Come having done **Homework #1** (run Claude Code on one real task) — we open
+- Come having done **Homework #1** (learn a command-line technique from the agent) — we open
   with a short share-back.
 
 No need to study the data beforehand. Coming to it cold is part of the exercise.

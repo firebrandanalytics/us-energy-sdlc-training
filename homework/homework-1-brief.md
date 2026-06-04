@@ -1,110 +1,123 @@
-# Homework #1 — Run Claude Code on One Real Task
+# Homework #1 — Learn a Shell Trick from the Agent
 
 **Assigned after:** Session 2
 **Due before:** Session 3
-**Time budget:** 30–60 minutes
+**Time budget:** 30–45 minutes
 
 ---
 
 ## The Assignment
 
-Pick one small, concrete task from your current work — something you'd normally
-do by hand in a terminal. Not a toy problem. A real one.
+Today you used Claude Code as a **shell** — it runs commands, and you saw it search
+8,000 log lines and write a regex faster than you could scroll. For homework, turn
+that around: use the agent as a **patient command-line tutor**.
 
-Then complete it end to end using Claude Code, the way we practised in Session 2:
-you describe the task, the agent plans and executes, you review and approve, you
-own the result.
-
-This is the same move as the in-class bootstrap, but pointed at real work instead
-of a throwaway project. It's also your first chance to feel the control surface —
-approval modes, planning, model choice — on a task you actually care about.
-
----
-
-## Requirements
-
-**1. Use Claude Code to complete the task — not to assist while you do the typing.**
-The goal is a full agentic pass: you describe the task, the agent plans and
-executes, you review and approve. No tab-completing your way through with the
-agent watching. If you find yourself typing the commands, stop and hand them back
-to the agent.
-
-**2. Use planning mode at least once.**
-Before a substantive step, ask Claude Code to write a plan (cycle in with
-`Shift+Tab`, or launch with `claude --permission-mode plan`). Read the plan before
-you let it proceed. Even if the plan looks obvious, practise the habit — and watch
-for a decision the plan surfaces that you hadn't actually made.
-
-**3. Try one short Auto Mode stretch.**
-Switch to Auto Mode (`Shift+Tab`) for part of the task and let the agent make a
-few decisions without stopping at every step. Note one moment where Auto Mode
-approved an action you'd have paused to review manually — or note that nothing
-surprised you, which is also a finding.
-
-**4. Review before you accept — every file.**
-This is the governance habit from Session 2: glance at each change before you
-approve it, and check the result against what you actually asked for, not just
-that it ran. Press `Ctrl+E` on at least one approval prompt to see the exact
-action first.
+As you work, **inspect the commands the agent runs and have it teach you the ones
+you don't know.** Bring **one new command-line technique** you learned to Session 3
+— not just a single flag, but a *technique* (a pipe idiom, a regex construct, a
+shell symbol like `${}` or `2>&1`). Many of us are light on the command line; this
+is the fastest way to level up, with a tutor who explains on demand.
 
 ---
 
-## Reflection — Three Bullets
+## How it works
 
-After the session, write three short bullets:
+The move has two steps, and you'll repeat it whenever something looks unfamiliar:
 
-1. **One thing that worked better than expected.**
-2. **One thing that surprised you** — good, bad, or just unexpected.
-3. **One question you want answered in Session 3.**
+1. **See the command.** Keep Claude Code in an **approval mode** (the default, or
+   Manual) — *not* bypass/auto-everything — so it pauses and shows you each command
+   before it runs. Read the command in the prompt. If it's long or collapsed,
+   press **Ctrl+E** to expand it.
+2. **Ask the agent to explain it.** Before you approve (or right after), ask:
+   *"Explain that command — what does each part do?"* or *"what does `uniq -c` do?"*
+   or *"walk me through that regex piece by piece."* The agent is a tutor that never
+   gets tired of "what does this do?"
 
-Keep each to two or three sentences. You're not writing an essay — you're
-capturing the thing freshest in your memory while it's still fresh.
+> This is the same **inspect-before-approve** habit from today's governance point —
+> you review what the agent does before you let it run. Here you also *learn* from
+> it. Two wins from one habit.
+
+**Setup notes:**
+- **Windows: use Git Bash** (install Git for Windows if you haven't). Claude Code
+  runs commands through Bash, so you'll see standard Unix syntax — pipes, `grep`,
+  `head`, `${}` — which is what we want.
+- **Stay in an approval mode.** In bypass/"don't ask" mode there are no prompts to
+  read, so you'd miss the whole point.
 
 ---
 
-## Choosing a Task
+## What to do
 
-Good candidates for this homework:
+Either bring your own small task, **or** use the starter prompts below (great if
+you're newer to the command line — they reliably produce commands worth learning).
+Point the agent at any folder with a few files in it — your log-hunt folder from
+class works, or any project.
 
-- Running a report or data pull you normally script by hand (e.g., a monthly
-  volume or RIN-transaction extract)
-- Generating boilerplate for a new loader, transform, or test suite
-- Refactoring a query or script you've been meaning to clean up
-- Scripting a repetitive git workflow (branch, commit, open a PR)
-- Writing a small helper or wrapper for something your team does often (e.g., a
-  CLI that formats a recurring export)
+### Starter prompts (each one surfaces a real technique)
 
-**Not recommended:** tasks that need access to production systems you can't safely
-sandbox, or where a mistake would be hard to reverse. The point of this homework
-is to learn the tool, not to introduce risk. If the only realistic version of
-your task touches prod, scope a smaller, safe slice of it instead.
+1. **A multi-stage pipe** *(tested — this one always produces a rich command):*
+   > *"What are the 10 most common words in `README.md` (or any text file here),
+   > with their counts?"*
 
-> **Tip.** If your in-class bootstrap project was a real-task scaffold, this is
-> the natural place to push it one step further — turn that stub into something
-> that actually does the job.
+   You'll see something like
+   `tr '[:upper:]' '[:lower:]' < file | tr -cs '[:alpha:]' '\n' | sort | uniq -c | sort -rn | head`.
+   Ask: *"explain each stage of that pipe."* That one line teaches `tr`, `|`,
+   `sort`, `uniq -c`, and `head` — a huge amount of shell in one go.
+
+2. **A regex search.**
+   > *"Find every email address (or every URL) in the files here."*
+
+   It'll write a `grep -E`/`grep -P` with a regex. Ask: *"explain that regex,
+   piece by piece — what does each symbol match?"*
+
+3. **Sort + top-N.**
+   > *"Show me the 5 largest files under this folder."*
+
+   Watch for `sort`, `head`, and flags like `-rh`. Ask what `-r`, `-h`, `-n` do.
+
+4. **A real CLI tool.**
+   > *"Fetch just the HTTP status code for https://example.com — nothing else."*
+
+   It'll reach for `curl` with flags like `-s -o /dev/null -w "%{http_code}"`. Ask:
+   *"what is each of those curl flags doing?"* (Needs internet — fine from your desk.)
+
+5. **Stretch — shell symbols.**
+   > *"Show me the command to rename every `.txt` file here to `.md` — don't run it,
+   > just show me and explain it."*
+
+   You'll meet a loop and parameter expansion like `${f%.txt}`. Ask what `${f%.txt}`
+   means — that `${...}` syntax is one of the highest-leverage things to know.
 
 ---
 
 ## What to Bring to Session 3
 
-Your three bullets. We'll open Session 3 with a few of them — 2–3 people will
-share briefly, and we'll use them to surface the themes we build on next.
+**One command-line technique you learned from the agent** — be ready to say, in one
+sentence each:
 
-You don't need slides or a write-up. Just bring the bullets — and if you hit
-something interesting, be ready to describe what happened in two minutes.
+1. **The technique** (e.g., *"piping to `sort | uniq -c | sort -rn` to count and
+   rank things,"* or *"`grep -P` with a lookahead,"* or *"`${var%.ext}` to strip a
+   file extension"*).
+2. **What it does**, in your own words.
+3. **When you'd use it** on your real work.
 
----
-
-## Looking Ahead
-
-Session 3 introduces the course dataset — a realistic U.S. Energy fuel-movements
-database — and turns the agent loose on reading SQL and a schema you didn't
-write. The homework that follows (Homework #2) is an **intent dossier** on a
-crusty legacy script: what it *truly* computes, and which of its comments are
-lying. This homework is the warm-up for that — getting comfortable directing the
-agent end to end, so that next time you can point it at code you don't trust and
-make it earn the explanation.
+We'll open Session 3 with a few of these — a quick round of "here's a trick I picked
+up." Bring the one that surprised you most.
 
 ---
 
-*Questions? Bring them to Session 3 — that's what the opening minutes are for.*
+## Tips
+
+- **Don't just collect flags — look for techniques.** `grep -i` is a flag;
+  `grep -oP "...\K..."` to *extract* a value is a technique. The second kind is
+  what's worth sharing.
+- **Make it explain, don't just accept.** The value is in the question "what does
+  this do?", asked the moment something looks unfamiliar — not in approving fast.
+- **It's fine to decline and ask.** If a command looks confusing, decline the
+  approval and ask the agent to explain (and to propose a simpler version). You're
+  the reviewer; understanding before approving is the job.
+
+---
+
+*Reference cards: **CC — Claude Code Commands** (approval keys, including Ctrl+E),
+**C5 — Approval Modes**. Questions? Session 3 opens with the share-back.*
