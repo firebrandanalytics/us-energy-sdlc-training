@@ -1,0 +1,10 @@
+body { font-family: system-ui, -apple-system, sans-serif; margin: 0; color: #1a2332; }
+header { background: #1a2332; color: #fff; padding: .75rem 1.5rem; font-size: 1.05rem; }
+main { padding: 1.5rem; max-width: 920px; }
+h1 { font-size: 1.4rem; margin: .2rem 0 1rem; }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: .4rem .6rem; border-bottom: 1px solid #eee; text-align: left; }
+th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.meta { color: #6b7280; font-size: .9rem; margin-top: 1rem; }
+a { color: #c4622d; text-decoration: none; }
+a:hover { text-decoration: underline; }

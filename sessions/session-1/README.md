@@ -27,8 +27,8 @@ makes all of that work.
 | **1** | **From Autocomplete to Agentic** | **Direct an agent instead of typing for it; calibrate trust by risk** |
 | 2 | Operating the Agent + Claude Code as your shell | Run real work through Claude Code; the day-to-day control levers |
 | 3 | Reading What You Didn't Write | Use the agent to comprehend unfamiliar SQL, query plans, and a schema that fights back |
-| 4 | From Vague Ask to Working Pipeline | Turn a fuzzy data request into a spec and start building |
-| 5 | Scaling the Build, and What's Next | Parallel agents, verification, and where this earns its keep |
+| 4 | From Vague Ask to a Working Service | Turn a fuzzy request into a spec and build a clean service |
+| 5 | Extend the Dashboard, and What's Next | Parallel agents extend a web app on the service; verify; where this earns its keep |
 
 ---
 

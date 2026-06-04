@@ -145,8 +145,9 @@ rough edges and open questions included. The places where the comments lied and
 the data set you straight are exactly where the interesting discussion is.
 
 This dossier is not throwaway: Session 4 takes the rules you extracted here and
-turns them into a clean data spec and the start of a pipeline. The better you
-understand what `vol_report.py` *truly* does, the easier that build will be.
+turns them into a clean spec and a clean **service** (the data layer you'll later
+put a web dashboard on). The better you understand what `vol_report.py` *truly*
+does, the easier that build will be.
 
 ---
 

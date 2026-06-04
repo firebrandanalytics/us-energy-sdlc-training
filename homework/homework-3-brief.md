@@ -1,171 +1,184 @@
-# Homework #3 — Finish a Pipeline Slice and Prove It Against the Legacy Numbers
+# Homework #3 — Stand Up the Dashboard Starter
 
-**Assigned after:** Session 4 (From Vague Ask to Working Pipeline)
+**Assigned after:** Session 4 (From Vague Ask to a Working Service)
 **Due before:** Session 5
-**Time budget:** 45–60 minutes
+**Time budget:** 30–45 minutes (deliberately small)
 
 ---
 
 ## The Assignment
 
-In Session 4 you sharpened the vague ask into a data spec and started a clean
-`pipeline.py` that replaces the legacy `data/vol_report.py`. Most people left with
-**physical volume** working and reconciling.
+In Session 4 you built a **service** — a `service.py` that *returns* clean monthly
+volumes by terminal. Now put the smallest possible **web page** on top of it: a
+read-only dashboard with **one view**, a table of volumes by terminal.
 
-For this homework you finish one more **slice** of the pipeline and — the part a
-classroom can't rush — write a **test that proves your number is right**: that it
-matches the legacy figure, *or* correctly improves on it for a reason you can
-state. The test is the deliverable. A number you can defend with a passing test is
-worth ten that "look about right."
+That's it. Skeleton plus one table. No month picker, no chart, no detail pages, no
+JSON API — those are what we build *together* in Session 5. This homework is
+intentionally light: the goal is that you arrive at Session 5 with something
+running, so we can spend the session **extending** it instead of bootstrapping it.
 
-Work in `sessions/session-4/` against `../../data/us_energy.sqlite`, continuing the
-pipeline you started in class.
+> **Why so small?** Session 5 is the capstone — splitting work across parallel
+> agents to grow this dashboard. You get far more out of that if the skeleton
+> already exists. Starting small here is the setup for going wide there.
 
 ---
 
-## Pick Your Slice
+## What you're building
 
-Choose **one** measure to finish and prove (or do both if you have time):
+A FastAPI app with a single route — `GET /` — that calls your service and renders
+a table:
 
-- **Taxable volume.** Physical minus tax-exempt dyed off-road diesel
-  (`prod_cd = 6`), keeping everything else. This one **must reconcile exactly** to
-  the legacy number — the legacy script is correct on taxable, even though its
-  "clear diesel only" comment lies about how.
-- **RIN credit gallons.** This is the *interesting* one. The legacy
-  `rin_eligible_gallons` multiplies every renewable gallon by a flat `RVO = 1.6`.
-  Your Homework 2 dossier almost certainly flagged that constant — the data implies
-  a **per-product** equivalence (renewable diesel and biodiesel are not the same).
-  So your RIN number should **not** match the legacy figure: it should *correctly
-  improve on it*. Pull the credit gallons from the `rin_transactions` ledger rather
-  than re-multiplying by a constant, and let your test assert the improvement.
+```
+U.S. Energy · Volumes Dashboard
+Fuel volumes by terminal · 2025-12
 
-If you didn't get physical fully reconciling in class, finishing **physical** is a
-legitimate slice too — just make sure your test pins it against the legacy number.
+Terminal    Physical (net gal)    Taxable (net gal)
+DAL              1,491,203            1,352,889
+OMA              1,402,551            1,221,004
+...
+```
+
+The shape that matters: **`app.py` never touches the database.** It imports
+`service.py` and renders whatever the service returns. That seam — the output
+contract you wrote in Session 4 — is the whole reason the app stays simple.
+
+---
+
+## Setup
+
+Work in **`sessions/session-5/`** (the dashboard lives where you'll extend it next
+session). Bring your Session 4 service in:
+
+```bash
+cd sessions/session-5
+cp ../session-4/service.py ./service.py     # your service from Session 4
+python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
+pip install fastapi uvicorn jinja2
+```
+
+Confirm the service still works from here (the DB is at `../../data/` from
+`sessions/session-5/`, same as Session 4):
+
+```bash
+python3 -c "import service; print(service.monthly_volumes(service.months()[-1])[0])"
+# -> a row dict, e.g. {'terminal': 'DAL', 'month': '2025-12', ...}
+```
+
+Keep **D5 — Output Contract & Dashboard** open. It has the FastAPI quickstart and
+the contract pattern you'll lean on.
 
 ---
 
 ## What to Produce
 
-### 1. The finished slice in `pipeline.py`
+### 1. `app.py` — one route
 
-Extend your pipeline so the chosen measure is computed correctly, to your spec.
-Keep the disciplines from class:
+A FastAPI app whose `GET /` route:
 
-- Name the magic values — no bare `6` / `8` in the SQL.
-- Sum **`net_gal`**, not `gross_gal`.
-- Bound the month with a **range predicate**, not `substr(lift_ts, 1, 7)`.
-- State which exclusions apply to which measure (they differ).
+- calls `service.months()` to find the latest month;
+- calls `service.monthly_volumes(month)` for that month;
+- renders the rows as an HTML table via a Jinja2 template.
 
-### 2. A reconciliation test
+Direct Claude Code to build it. A prompt that works:
 
-Write a test — `pytest` is fine, or a plain `assert` script if your team can't run
-pytest — that compares your pipeline's output to the legacy `vol_report.py` for a
-known month (use **2025-08**) and **fails loudly** if they disagree in a way you
-didn't intend.
-
-Two shapes, depending on your slice:
-
-- **A "must match" test** (physical, taxable): assert your number equals the legacy
-  number for the top terminals.
-- **A "correctly improves" test** (RIN): assert your number is the *corrected*
-  figure and is **not** the legacy figure — and leave a comment saying why.
-
-A minimal skeleton to adapt (it imports your pipeline and shells out to the legacy
-script — wire it to whatever interface your `pipeline.py` actually exposes):
-
-```python
-# test_reconcile.py  —  run from sessions/session-4/
-import sqlite3, subprocess, sys
-import pipeline   # your module from Session 4
-
-DB = "../../data/us_energy.sqlite"
-
-# Legacy top-6 physical / taxable for 2025-08 (from `python vol_report.py 2025-08`
-# run inside data/). These are the numbers your slice reconciles against.
-LEGACY_2025_08 = {
-    "DAL": (1_517_103, 1_371_642), "OMA": (1_435_379, 1_245_951),
-    "APP": (1_367_376, 1_264_810), "FAR": (1_339_984, 1_198_102),
-    "DSM": (1_323_169, 1_207_528), "HOU": (1_282_704, 1_165_897),
-}
-
-def test_taxable_matches_legacy():
-    con = sqlite3.connect(DB)
-    rows = {r.term_cd: r for r in pipeline.build(con, "2025-08")}   # adapt to your API
-    con.close()
-    for term, (phys, tax) in LEGACY_2025_08.items():
-        assert round(rows[term].taxable_gal) == tax, f"{term} taxable diverged"
-
-def test_rin_correctly_improves_on_legacy():
-    # Legacy uses a flat RVO = 1.6 and reports 8,906,150 for 2025-08.
-    # The corrected figure (per-product equivalence, from rin_transactions) is
-    # 9,077,485. Our pipeline should produce the corrected number, NOT the legacy one.
-    con = sqlite3.connect(DB)
-    rin_total = round(sum(r.rin_gal for r in pipeline.build(con, "2025-08")))
-    con.close()
-    assert rin_total != 8_906_150, "still reproducing the stale 1.6 constant"
-    assert rin_total == 9_077_485, "RIN does not match the corrected ledger figure"
+```
+In this folder there's a service.py exposing monthly_volumes(month) and months(),
+which return clean volume rows by terminal (fields: terminal, month, physical_gal,
+taxable_gal). Build a minimal read-only FastAPI app, app.py, with ONE route GET /
+that shows a table of the latest month's volumes by terminal, rendered with a
+Jinja2 template. The app must call the service — it must NOT query the database
+itself. Keep it minimal: no month filter, no chart, no other routes. Use
+templates/ for the HTML and a small static/style.css. Note: this FastAPI version
+wants the request first: templates.TemplateResponse(request, "name.html", {...}).
+Then tell me how to run it.
 ```
 
-> You don't have to use these exact numbers blindly — **regenerate them yourself**.
-> Run `python vol_report.py 2025-08` from inside `data/` for the legacy figures,
-> and query `rin_transactions` for the corrected RIN total. The point of the
-> homework is that *you* establish the ground truth and pin it.
+Review the diff before you accept it (**C10** habit). The two things to check:
 
-### 3. A one-line note next to any intended difference
+- **It calls the service**, not the database. If you see `sqlite3.connect` in
+  `app.py`, send it back — the data layer is `service.py`'s job.
+- **The numbers match your Session 4 service.** Same volumes, now in a browser.
 
-Wherever your number deviates from the legacy script on purpose (the RIN case),
-write a single line — in the test or in `pipeline.py` — saying what the correction
-is and why. An undocumented gap is a bug; a documented one is an improvement.
+### 2. Run it and see it
+
+```bash
+uvicorn app:app --reload
+# open http://localhost:8000
+```
+
+You should see your table in a browser. That's the deliverable: a running page,
+served by FastAPI, showing real reconciled numbers from your service.
+
+### 3. One sentence on the seam
+
+In a comment at the top of `app.py` (or your reflection notes), write one line:
+*why does the app import the service instead of running SQL itself?* You'll build on
+that answer in Session 5 when two agents extend this in parallel.
 
 ---
 
-## The Standout Move — Make the Test Catch a Real Regression
+## The Safety Net — You Will Not Be Blocked
 
-After your test passes, **break the pipeline on purpose** and confirm the test
-fails:
+A working starter is committed at **`sessions/session-5/starter/`**. If you run out
+of time, get stuck, or your build won't run, you can still do the Session 5 lab:
 
-- Swap `net_gal` for `gross_gal` and watch the "must match" test go red.
-- Or drop the `prod_cd = 6` exclusion from taxable and watch the taxable test fail.
-- Or restore the flat `1.6` factor and watch the RIN test catch it.
+```bash
+cd sessions/session-5
+cp -r starter/* .          # app.py, service.py, templates/, static/, requirements.txt
+uvicorn app:app --reload   # confirm it serves at http://localhost:8000
+```
 
-Then put it back. A test that never fails isn't proving anything. Seeing it fail
-on the exact mistake it's meant to catch is how you know it's load-bearing — and
-it's the difference between "I think it's right" and "I can prove it's right."
+**Try to build your own first** — the learning is in wiring the app to the service
+yourself, and in catching the "don't query the DB from the app" mistake in your own
+diff. The starter is your reference and your fallback, not your first move. (If you
+do use it, skim `app.py` so you understand what you're extending.)
+
+---
+
+## Stretch (optional, if you finish early)
+
+Pick one — small wins that make Session 5 smoother:
+
+- **Show the row count and month** in the page header (e.g. "25 terminals ·
+  2025-12").
+- **Light styling** — right-align the numbers, a header bar, tabular figures. (The
+  committed starter's `style.css` is a fine reference if you want one.)
+- **A `requirements.txt`** pinning `fastapi`, `uvicorn`, `jinja2`, so a teammate
+  can `pip install -r requirements.txt` and run it.
+
+Don't add a month filter or chart yet — resist it. Those are Session 5, on purpose.
 
 ---
 
 ## Reflection — Bring These to Session 5
 
-After you finish, write short answers to these four prompts:
+After you finish, jot short answers:
 
-1. **Which slice did you finish, and does it reconcile?** Match exactly, or
-   improve-with-a-reason? State the number and the legacy number.
-2. **What did writing the test surface?** Did pinning the expected number force a
-   decision you'd left fuzzy?
-3. **Did your test actually catch the broken version?** Which mistake did you
-   inject, and did it go red?
-4. **One failure or frustration** — a moment where the agent was confidently
-   wrong, reproduced the legacy bug, or led you somewhere you had to back out of.
+1. **Did it run, and do the numbers match your service?** One sentence.
+2. **The seam:** in your own words, what does keeping SQL out of `app.py` buy you?
+3. **One thing you'd want to add** to the dashboard — a feature you'll be glad we
+   build next session.
+4. **One snag** — a moment the agent did something you had to correct, or a setup
+   issue you hit (so we can clear it for the room).
 
-Keep each answer to two or three sentences. You're capturing the experience while
-it's fresh, not writing a report.
+Keep each to two or three sentences. Capturing it while it's fresh, not writing a
+report.
 
 ---
 
 ## What to Bring to Session 5
 
-- Your extended `pipeline.py` and your reconciliation test.
-- Your four reflection answers.
+- Your running `sessions/session-5/` dashboard (or the copied starter).
+- Your four reflection bullets.
 
-Session 5 opens with the share-back, then scales the rest of the pipeline across
-parallel agents working against your spec as a shared contract. The cleaner your
-slice and the sharper your spec, the more the parallel build just works.
-
-You don't need slides — just be ready to say, in two minutes, which slice you
-finished, whether it matched or improved, and what your test caught.
+Session 5 opens with a quick share-back, then we **extend this dashboard** — month
+filter, a chart, a terminal-detail page, a JSON API — by splitting the work across
+parallel agents, all building against your service's contract. The cleaner your
+skeleton, the more the parallel build just clicks together.
 
 ---
 
-*Reference: the spec template is **D4 — Data Spec Template**; the review discipline
-is **C10 — Review Rubric**. The pipeline and spec you started are from the Session
-4 lab guide. Questions? Session 5 opens with the share-back.*
+*Reference: **D5 — Output Contract & Dashboard** (the FastAPI quickstart and the
+contract pattern); **C10 — Review Rubric** (reviewing the agent's diff). The service
+you're building on is from the Session 4 lab. Questions? Session 5 opens with the
+share-back.*

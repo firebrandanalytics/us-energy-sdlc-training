@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Fuel volumes by terminal &middot; {{ month }}</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Terminal</th>
+      <th class="num">Physical (net gal)</th>
+      <th class="num">Taxable (net gal)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r.terminal }}</td>
+      <td class="num">{{ "{:,}".format(r.physical_gal) }}</td>
+      <td class="num">{{ "{:,}".format(r.taxable_gal) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p class="meta">{{ rows|length }} terminals &middot; read-only &middot; extend me in Session 5</p>
+{% endblock %}

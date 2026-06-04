@@ -11,12 +11,18 @@ that fights back.**
 
 Sessions 1 and 2 built the mindset and the controls: you direct, the agent
 executes, and you review its work like a junior engineer's. Today we point that
-skill at the thing data and integration teams actually spend their days on —
-**code and data someone else wrote, with no one left to ask.**
+skill at the thing every engineer actually spends their days on —
+**code and data someone else wrote, with no one left to ask.** Reading an
+unfamiliar system and inferring what it really does is the most universal
+developer skill there is; this session is that skill, with the agent doing the
+reading and the data settling every claim.
 
 This is the first session on the **running dataset** — a realistic U.S. Energy
-fuel-movements database we'll use for the rest of the course. Everything from here
-is hands-on against real(istic) data.
+fuel-movements database we'll use for the rest of the course. Over the next three
+sessions you'll run a full arc on it: **comprehend** the legacy code and data
+(today), **build a clean service** on it (Session 4), and **build a web dashboard**
+on that service (Homework 3 + Session 5). Everything from here is hands-on against
+real(istic) data and code.
 
 The through-line from Session 1 carries straight in:
 
@@ -131,5 +137,7 @@ we hand it out at the end of the session.
 
 Session 4 turns comprehension into construction: you'll take a vague stakeholder
 request — *"give me clean monthly volumes by terminal"* — sharpen it into a real
-data spec, and start building a pipeline. The intent dossier you build for
-homework is the raw material for that session, so do it on the real script.
+spec, and build a clean **service** (a data layer something else can call). Then,
+across Homework 3 and Session 5, you'll put a **web dashboard** on top of that
+service. The intent dossier you build for homework is the raw material for the
+service, so do it on the real script.

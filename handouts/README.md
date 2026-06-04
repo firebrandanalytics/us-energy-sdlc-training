@@ -7,9 +7,9 @@ These cards are quick references, not lessons — pull the relevant one up durin
 Two families live here:
 
 - **C\*** — the **carry-over** cards from the original course. Tool- and practice-oriented (approval modes, model selection, the spec template, Microsoft 365, the review rubric, Claude Code commands). These are domain-neutral and stay useful as-is.
-- **D\*** — the **new, data-oriented** cards for the U.S. Energy running dataset. They cover the fuel-data vocabulary, reading query plans, decoding magic values, and writing a data spec — the skills Sessions 3–5 are built on.
+- **D\*** — the **new** cards for the U.S. Energy running dataset and the build on top of it. They cover the fuel-data vocabulary, reading query plans, decoding magic values, writing a data spec, and — in D5 — the output contract and the FastAPI dashboard. These are the skills Sessions 3–5 are built on.
 
-> **Why both?** The original cards were written around a web-app / fuel-tax example. The course you're taking is data-and-pipeline focused, so the **D\*** set replaces the *domain examples* while the **C\*** set keeps the *agentic practices* that don't change. Where a C\* card still uses the old domain in its examples (e.g. C1's IFTA/FastAPI entries, or trip/logbook examples), read past the example to the underlying practice — and reach for the matching **D\*** card for the data version.
+> **Why both?** The original cards were written around a web-app / fuel-tax example. This course runs a **full-stack arc** — comprehend the legacy code (S3) → build a clean **service** (S4) → build a **web dashboard** on it (HW3 + S5) — so the **D\*** set carries the dataset *and* the app, while the **C\*** set keeps the *agentic practices* that don't change. Note: because the dashboard is FastAPI + Jinja2, the C-card and C1 entries that mention FastAPI/Jinja2 are **relevant again** (not just "old domain to read past") — D5 is the course-specific version. Where a C\* card still uses an unrelated old example (trip/logbook, IFTA tax math), read past it to the underlying practice.
 
 ---
 
@@ -38,6 +38,7 @@ Written for the running dataset (`../data/us_energy.sqlite`) and the comprehensi
 | **D2 — Query-Plan Cheat Sheet** | Reading `EXPLAIN QUERY PLAN`, spotting a `SCAN`, and when an index turns it into a `SEARCH` | Session 3 (Exercise 1) |
 | **D3 — Magic Values & Intent** | Reverse-engineering cryptic codes, handling an overloaded column, and distrusting comments — inferring intent from behavior + data | Sessions 3–4 |
 | **D4 — Data Spec Template** | Pinning a data deliverable: grain, filters/exclusions, units (gross vs. net), edge cases, reconciliation | Session 4 (Exercise 2) |
+| **D5 — Output Contract & Dashboard** | Giving a service a clear output contract, and a FastAPI quickstart for the read-only dashboard that consumes it | Sessions 4–5, Homework 3 |
 
 ---
 
@@ -50,8 +51,10 @@ The new cards don't throw the old ones away — they extend them onto the data d
 | Writing a spec for a **data deliverable** | C7 (general spec structure) | **D4** (grain / filters / units / edge cases) |
 | Looking up a **term** | C1 (course/tooling vocabulary) | **D1** (fuel-data + data-skill terms) |
 | **Reviewing** an AI-built query or pipeline | C10 (review rubric) | **D2** (verify the plan), **D3** (verify intent vs. comments) |
+| Building the **service** + its **contract** | C7 (general spec structure) | **D4** (the spec) + **D5** (the output contract) |
+| Building / extending the **dashboard** | C10 (review the diff) | **D5** (contract + FastAPI quickstart) |
 
-> **Rule of thumb:** C7 + D4 is the combination for Session 4's "vague ask → spec." C10 + D2/D3 is the combination for reviewing what the agent produced in Sessions 4–5.
+> **Rule of thumb:** C7 + D4 is the combination for Session 4's "vague ask → spec." C10 + D2/D3 is the combination for reviewing what the agent produced in Sessions 4–5. D5 is the card for the build itself — the contract in Session 4, the dashboard in Homework 3 and Session 5.
 
 ---
 
