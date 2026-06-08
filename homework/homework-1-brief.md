@@ -8,9 +8,17 @@
 
 ## The Assignment
 
-Today you used Claude Code as a **shell** — it runs commands, and you saw it search
-8,000 log lines and write a regex faster than you could scroll. For homework, turn
-that around: use the agent as a **patient command-line tutor**.
+Today you used Claude Code as a **shell** — it runs commands, and you watched it
+tear through an 8,000-line log with a regex. We ran short on that exercise in class,
+so this homework has **two parts**:
+
+1. **Finish the log hunt.** Point the agent at the log and get it to pin the one
+   real error (the failure with **no "recovered" line after it**), then propose the
+   fix. Bring the regex/`grep` that found it.
+2. **Turn it around.** Use the agent as a **patient command-line tutor**, and bring
+   back one new technique you learned.
+
+Part 2 is the bulk of the assignment — here's how it works.
 
 As you work, **inspect the commands the agent runs and have it teach you the ones
 you don't know.** Bring **one new command-line technique** you learned to Session 3
@@ -91,6 +99,9 @@ class works, or any project.
 ---
 
 ## What to Bring to Session 3
+
+**From the log hunt:** which regex or `grep` finally pinned the real error, and the
+one-line fix you'd make. (One sentence is plenty.)
 
 **One command-line technique you learned from the agent** — be ready to say, in one
 sentence each:

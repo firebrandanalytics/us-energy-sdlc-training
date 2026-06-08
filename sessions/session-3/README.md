@@ -57,8 +57,8 @@ do, not what it does now.)
 
 ## Agenda (2 hours)
 
-1. **Share-back from Homework #1** (~10 min) — a new command-line technique you
-   learned from the agent: what it does, and when you'd use it.
+1. **Share-back from Homework #1** (~10 min) — the log needle-hunt you finished,
+   and a new command-line technique you learned from the agent.
 2. **Meet the dataset** (~18 min) — a guided walk through the schema of the
    fuel-movements database (terminals, lifts, RIN credits) and how to open it.
 3. **First pass, no agent** (~12 min) — read the opaque query yourself, then we
