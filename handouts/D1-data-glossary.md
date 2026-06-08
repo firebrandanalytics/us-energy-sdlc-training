@@ -28,7 +28,7 @@ This card covers the running dataset (`data/us_energy.sqlite`) and the agent ski
 ## Domain terms (fuel distribution & trading)
 
 **Barge**
-A river/marine vessel used to move fuel in bulk. In this dataset barge is **transport mode 4** — not to be confused with mode 8 (see *Book adjustment*). A comment in the legacy script claims it drops "barge"; read the code, it drops mode 8.
+A river/marine vessel used to move fuel in bulk. In this dataset barge is **transport mode 4** — not to be confused with mode 8, an undocumented non-transport code (see *Mode*). A comment in the legacy script you'll meet in Homework #2 claims it drops "barge"; read the code, it drops mode 8.
 
 **Biodiesel**
 A renewable diesel made from fats/oils (FAME), product code **9** here. Generates RIN credits; its blend/pathway tag lives in `custom_text1` (e.g. `OR-BD-1`).
@@ -37,7 +37,7 @@ A renewable diesel made from fats/oils (FAME), product code **9** here. Generate
 For gasoline, how much ethanol is blended in: **E0** (none), **E10** (10%), **E15** (15%). Stored in `custom_text1` *for gasoline rows only* — that same column means something different for renewables (see *Overloaded column*).
 
 **Book adjustment**
-A non-physical accounting entry — a correction on the books, not fuel that actually moved. It is **transport mode 8**, and for *any* physical-volume question it must be **excluded**. This is the value the legacy script's "barge" comment is really filtering.
+A non-physical accounting entry — a correction on the books, not fuel that actually moved. The *concept* matters because any such entry must be **excluded** from a physical-volume figure. Whether the dataset's undocumented `mode = 8` (see *Mode*) is exactly this is **not settled by the data or the shipped docs** — the value sits outside the 1–4 transport set and looks like a normal row, but nothing names it. Treat "mode 8 = book adjustment" as a hypothesis to **confirm with a domain expert**, not a fact you can derive.
 
 **Clear diesel (ULSD)**
 Ultra-low-sulfur on-road diesel, product code **2**. It is taxable. Contrast with *dyed diesel*.
@@ -55,7 +55,7 @@ A Low Carbon Fuel Standard pathway identifier — a code (e.g. `CA-RD-T1`) descr
 A single fuel-movement ticket: product X left terminal Y on carrier Z at a timestamp, with a volume and a status. The `lifts` table is the fact table — everything else describes or rolls up these rows.
 
 **Mode (transport mode)**
-How the fuel moved: **1** pipeline, **2** truck/rack, **3** rail, **4** barge, **8** book adjustment (non-physical). Modes 1–4 are physical; **8 must be excluded** from volume.
+How the fuel moved: **1** pipeline, **2** truck/rack, **3** rail, **4** barge. The data also carries a **mode 8** that sits *outside* this transport set and is documented nowhere — its meaning isn't derivable from the shipped artifacts (the dictionary only lists 1–4). It is plainly *not a physical transport mode*, so a physical-volume figure should exclude it; *what it actually is* is an open question to take to a human (a book adjustment is the working guess — confirm it).
 
 **Net gallons** — see *Gross vs. net gallons*.
 
@@ -110,7 +110,7 @@ The engine reading **every row** of a table to satisfy a query, because nothing 
 A side structure that lets the engine **jump** to matching rows instead of scanning all of them. After the right index exists, the plan line changes from `SCAN` to `SEARCH <table> USING INDEX ...`. Adding one is the fix in Exercise 1.
 
 **Intent dossier**
-The Homework #2 deliverable: a written account of what a legacy script (`data/vol_report.py`) *truly* computes, which of its comments are lying, and the decoded meaning of each magic filter. The agent drafts it from behavior; you verify it against the data.
+The Homework #2 deliverable: a written account of what a legacy script (the `vol_report.py` you'll create from the Homework #2 brief) *truly* computes, which of its comments are lying, and the decoded meaning of each magic filter. The agent drafts it from behavior; you verify it against the data.
 
 **Data spec**
 A precise statement of a data deliverable — its **grain**, **filters/exclusions**, **units**, and **edge cases** — written before any pipeline code. It turns a vague ask ("clean monthly volumes by terminal") into something the agent can build against and you can check. Template in **D4**.

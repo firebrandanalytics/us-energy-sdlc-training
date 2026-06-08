@@ -30,18 +30,105 @@ behind it is a guess, and this script is built to punish guesses.
 
 ## Setup
 
-- Work at the **repo root** in a Claude Code session (so the agent can read both
-  `data/vol_report.py` and `data/us_energy.sqlite`).
+**First, create the script.** It isn't in your repo — that's deliberate. Session 3
+was about reading the *data* on its own terms, so we kept this comment-laden script
+out of the room. Save the listing below **exactly as shown** (the comments are part
+of the puzzle — don't "fix" them) as **`data/vol_report.py`**:
+
+```python
+"""
+vol_report.py  --  monthly volume rollup for the energy desk.
+
+Originally written for the pipeline-only feed (2019); extended a few times since.
+Numbers reconcile to the old AS/400 'VOLRPT' job to within rounding.
+
+Usage:  python3 vol_report.py [YYYY-MM]
+"""
+import sqlite3, sys, collections
+
+DB = "us_energy.sqlite"
+RVO = 1.6          # scale factor
+
+
+def load(con):
+    return con.execute(
+        "SELECT lift_ts, term_id, mode, prod_cd, net_gal, status FROM lifts").fetchall()
+
+
+def physical_by_term(rows, ym):
+    out = collections.defaultdict(float)
+    for ts, term, mode, prod, gal, status in rows:
+        if ts[:7] != ym:
+            continue
+        # skip test + voided tickets (status 9)
+        if status == 8:
+            continue
+        # barge loads are reconciled upstream, so drop them to avoid double counting
+        if mode == 8:
+            continue
+        # gallons in this feed are stored in hundreds -- scale up to actual
+        g = gal
+        out[term] += g
+    return out
+
+
+def taxable_by_term(rows, ym):
+    out = collections.defaultdict(float)
+    for ts, term, mode, prod, gal, status in rows:
+        if ts[:7] != ym:
+            continue
+        if status == 8:
+            continue
+        if mode == 8:
+            continue
+        # clear diesel only
+        if prod == 6:
+            continue
+        out[term] += gal
+    return out
+
+
+def rin_eligible_gallons(rows, ym):
+    tot = 0.0
+    for ts, term, mode, prod, gal, status in rows:
+        if ts[:7] != ym or status == 8:
+            continue
+        # renewable diesel only (prod 7)
+        if prod == 7:
+            tot += gal * RVO
+        elif prod == 9:
+            tot += gal * RVO
+    return tot
+
+
+if __name__ == "__main__":
+    ym = sys.argv[1] if len(sys.argv) > 1 else "2025-08"
+    con = sqlite3.connect(DB)
+    names = dict(con.execute("SELECT term_id, term_cd FROM terminals"))
+    rows = load(con)
+    phys, tax = physical_by_term(rows, ym), taxable_by_term(rows, ym)
+    print(f"== {ym} ==  (top 6 terminals by physical net gal)")
+    for term, g in sorted(phys.items(), key=lambda kv: -kv[1])[:6]:
+        print(f"  {names[term]:4s}  physical={g:14,.0f}   taxable={tax.get(term,0):14,.0f}")
+    print(f"  RIN-eligible gallons (all terminals): {rin_eligible_gallons(rows, ym):,.0f}")
+    con.close()
+```
+
+- Then work at the **repo root** in a Claude Code session (so the agent can read
+  both `data/vol_report.py` and `data/us_energy.sqlite`).
 - Confirm the script runs, so you have its real output to anchor against:
 
   ```bash
   # from inside the data/ folder (the script hard-codes the db name)
   cd data
-  python vol_report.py 2025-08
+  python3 vol_report.py 2025-08
   ```
 
   It prints physical and taxable volumes for the top terminals plus a
   RIN-eligible gallons figure. Keep that output — you'll check claims against it.
+  **Sanity-check your paste:** the first line should read
+  `DAL  physical=     1,517,103   taxable=     1,371,642`. If it doesn't, you
+  mistyped the script — re-copy it before going further.
 - Have **D3 (Magic Values & Intent)** open. It is the method for this whole
   assignment. **D1** (glossary) and **D2** (query plans) are useful backup.
 
@@ -61,13 +148,17 @@ filters, what it returns. No interpretation yet.
 > its result represents. Don't interpret the comments yet; just the code."*
 
 **2. Decoded magic values.** Every bare integer the function filters on
-(`status`, `mode`, `prod_cd`, …), decoded **from the data** — not from `code_ref`
-or the data dictionary, both of which are deliberately incomplete. Back each decode
-with the query you ran.
+(`status`, `mode`, `prod_cd`, …). Decode each the way you did in Session 3:
+**profile the data first**, then bring in `code_ref` / the dictionary and read them
+critically (both are deliberately incomplete and stale). Say *where* each answer
+comes from — and when the rows and the docs *both* fall short (as at least one of
+these codes will), name it as an **open question for a human** rather than forcing a
+guess. Back every decode you can make with the query you ran.
 
-> Prompt idea: *"This function filters on `status`, `mode`, and `prod_cd`. Decode
-> each value it tests against by profiling `data/us_energy.sqlite`. Check whether
-> `code_ref` even covers them, then prove each meaning from the rows."*
+> Prompt idea: *"This function filters on `status`, `mode`, and `prod_cd`. Profile
+> each value in `data/us_energy.sqlite` from the rows first, then check `code_ref`
+> and the dictionary. For each, give the meaning **and where it came from** — and
+> flag any you can't settle from either the data or the docs."*
 
 **3. Stated vs. real intent.** For each filter and each comment: what the comment
 *claims*, what the code *actually does*, and the **gap** between them. Name every

@@ -1,6 +1,6 @@
 # Lab Guide — Exercise 1: Reading an Opaque Query
 
-U.S. Energy AI Training · Session 3 · Hands-on (~55 min)
+U.S. Energy AI Training · Session 3 · Hands-on (~60 min)
 
 ---
 
@@ -22,15 +22,15 @@ ORDER BY net DESC;
 
 It runs. It returns numbers the desk relies on. **Nobody can tell you what the
 three magic filters are for, whether they're still correct, or why it's slow at
-month-end.** Your job today is to find out — using the agent to do the reading,
-and the data to settle every claim.
+month-end.** Your job today is to find out.
 
-That's the exercise. Everything below is the method.
+That's the exercise. Everything below is the method — and the method has a spine:
 
-> **The discipline for the whole lab:** the agent will happily *paraphrase* the
-> query and *repeat the comments back* as if they were fact. That is not the goal.
-> For every claim — what a code means, what a filter is for — make the agent
-> **prove it from the rows.** A meaning without a query behind it is a guess.
+> **Read the data first, the documentation second, and know which of your answers
+> came from where.** The behavior of the code and the contents of the data are the
+> source of truth. The schema doc and the lookup table are *clues* — useful, but
+> partial and, in places, out of date. And some things the data simply can't tell
+> you: part of the skill is naming those and taking them to a human.
 
 ---
 
@@ -48,31 +48,47 @@ You should see seven tables, including `lifts` (the ~50k-row fact table),
 `code_ref` (a lookup), and `terminals`. If `sqlite3` isn't available, the Python
 snippet in [`../../data/README.md`](../../data/README.md) works with no installs.
 
-**Open a Claude Code session at the repo root** (so it can read both the database
-and the data dictionary). Everything below is run through that session.
+**Open a Claude Code session at the repo root.** Everything below is run through
+that session.
 
 > **Who runs the queries? The agent does — you direct and review.** You won't be
 > typing SQL by hand. You tell Claude Code what to find — *"run a COUNT of each
-> status value and show me the rows"* — and it runs the query against the file (it
-> uses the `sqlite3` CLI or Python under the hood) and shows you the result. Your
-> job is to read what comes back and decide whether it actually proves the claim.
-> *(Want to poke the data directly yourself? Optional — `data/README.md` has three
-> easy ways: the interactive `sqlite3` prompt, a copy-paste Python snippet that
-> needs no installs, or a free GUI like DB Browser for SQLite.)*
+> status value and show me the rows"* — and it runs the query (it uses `sqlite3`
+> or Python under the hood) and shows you the result. Your job is to read what
+> comes back and decide whether it actually proves the claim.
+> *(Want to poke the data yourself? Optional — `data/README.md` has three ways.)*
 
-Have these handouts open: **D2** (query plans) and **D3** (magic values). Skim
-**D1** (data glossary) if the fuel terms are unfamiliar.
+Keep **D2** (query plans) handy for Step 3. **Hold off on D1 and D3 until Step 2b** —
+they name some of the codes, and the whole point of Steps 0–2a is to read the data
+cold first. (If a fuel *term* is unfamiliar mid-lab, ask the agent rather than
+reaching for the glossary — that keeps the answers out of sight until you've earned
+them.)
 
-> **One ground rule for the lab:** point the agent at the **database file** and
-> ask it to run real queries. Don't let it answer from the column names or from
-> `DATA-DICTIONARY.md` alone — both are deliberately incomplete and, in places,
-> out of date. The rows are the truth.
+---
+
+## Step 0 — Your own first pass (no agent, ~5 min)
+
+Before you let the agent near it, read the query yourself. **Agent closed.** You
+have the query and the data dictionary (`data/DATA-DICTIONARY.md`).
+
+In five minutes, get as far as you can on one question: **what does this query
+return?** But the more valuable output is the opposite — **what can't you tell?**
+
+- Which filters are obvious, and which are just bare numbers you can't pin down?
+- Does the dictionary actually explain `status = 8`, `mode = 8`, `prod_cd = 6`?
+- Write down every question mark.
+
+Don't look anything up beyond the dictionary; don't ask the agent. The point is to
+feel the opacity directly — that's what makes the next part land. **Keep your list
+of question marks.** It's about to become the agent's to-do list, and you'll know
+exactly which answers to check hardest.
 
 ---
 
 ## Step 1 — Literal behavior (8 min)
 
-Before you can ask *why*, you need *what* — mechanically, no interpretation yet.
+Now bring in the agent. Before you can ask *why*, you need *what* — mechanically,
+no interpretation yet.
 
 **Prompt Claude Code:**
 
@@ -110,89 +126,132 @@ One concept you actually understand beats five you nodded past. This move —
 
 ---
 
-## Step 2 — Decode the magic values (15 min)
+## Step 2 — Decode the magic values
 
-This is the heart of the lab. `status <> 8`, `mode <> 8`, `prod_cd <> 6` — three
-bare integers. The query's author knew what they meant; the schema doesn't say.
+This is the heart of the lab: `status <> 8`, `mode <> 8`, `prod_cd <> 6` — three
+bare integers. We'll decode them in **two deliberate passes**, because *where* an
+answer comes from matters as much as the answer.
 
-**First, check the lookup — and watch it fail you.**
+### Step 2a — Data only, no documentation (12 min)
 
-```sql
-SELECT * FROM code_ref WHERE code_type = 'status';
-```
+**Most of the time in the real world, you don't get a data dictionary.** So start
+without one. Tell the agent to ignore the docs and reason purely from the rows:
 
-You'll get `1 = Open` and `9 = Void (DEPRECATED ...)`. Notice what's **missing**:
-there is no row for `8`. The query filters out `status = 8`, but the lookup
-doesn't even list it. **A code the data uses but the lookup never mentions is a
-flashing sign the lookup is stale.** This is exactly why you can't stop at the
-dictionary.
+> For `status`, `mode`, and `prod_cd`, work **only from the data** in
+> `data/us_energy.sqlite` — the fact tables `lifts`, `rin_transactions`,
+> `rack_prices`. **Do not read `DATA-DICTIONARY.md`, do not query `code_ref`, and
+> do not read any `.py` file.** For each of the three excluded values
+> (`status = 8`, `mode = 8`, `prod_cd = 6`): show its distribution, how it differs
+> from the other values of that column (size, related columns, pricing, anything),
+> and — crucially — tell me what you **cannot** determine about its *meaning* from
+> the data alone.
 
-**Now make the agent decode each value from the data.**
+**Keep it honest:** after it answers, ask it to **list every file and table it
+read.** If `DATA-DICTIONARY.md`, `code_ref`, or any `.py` shows up, it broke the
+rule — have it redo the pass from the rows only. (Agents reach for the docs by
+reflex; catching that is part of the point.)
 
-> For each of the three filters — `status <> 8`, `mode <> 8`, `prod_cd <> 6` —
-> figure out what the excluded value means by profiling the data in
-> `data/us_energy.sqlite`. Don't rely on `code_ref` or `DATA-DICTIONARY.md`;
-> check whether they even cover these codes, then prove the meaning from the
-> rows. For each, tell me (a) the value's meaning, (b) the evidence query you
-> ran, and (c) *why* a volume rollup would exclude it.
-
-Direct the agent to run something like these — then read each result and decide
-whether it really proves the claim. That scrutiny *is* the skill; you don't have to
-write the SQL yourself (though you can — see `data/README.md`):
+Direct the agent toward evidence like this, and read each result yourself:
 
 ```sql
--- Distribution: which status codes actually occur? (8 appears; the lookup's 9 doesn't)
-SELECT status, COUNT(*) FROM lifts GROUP BY status ORDER BY status;
-
--- Does status 9 — the value the lookup calls "void" — exist at all?
-SELECT COUNT(*) FROM lifts WHERE status = 9;          -- 0: a ghost code
-
--- Where do status-8 rows cluster? Reversals/voids often clump.
-SELECT term_id, substr(lift_ts,1,7) AS ym, COUNT(*)
-FROM lifts WHERE status = 8
-GROUP BY term_id, ym ORDER BY COUNT(*) DESC LIMIT 5;
-
--- mode: only 1-4 are documented. What else is in the data?
-SELECT mode, COUNT(*) FROM lifts GROUP BY mode ORDER BY mode;   -- an 8 appears
-
--- prod_cd: tie the code to something readable. Renewables carry a d_code; do these?
+-- which values actually occur, and how big are they?
+SELECT status, COUNT(*), ROUND(AVG(net_gal)) FROM lifts GROUP BY status ORDER BY status;
+SELECT mode,   COUNT(*), ROUND(AVG(net_gal)) FROM lifts GROUP BY mode   ORDER BY mode;
 SELECT prod_cd, d_code, COUNT(*) FROM lifts GROUP BY prod_cd, d_code ORDER BY prod_cd;
+
+-- do the renewables-looking products carry a RIN d_code? does prod 6?
+SELECT prod_cd, COUNT(*) AS n, COUNT(d_code) AS with_dcode FROM lifts GROUP BY prod_cd;
+
+-- does prod 6 price like gasoline or like diesel? (a clue, not a verdict)
+SELECT prod_cd, ROUND(AVG(rack_price),2) FROM rack_prices GROUP BY prod_cd ORDER BY prod_cd;
 ```
 
-**What you're working toward** (let the data lead you here — don't just take it
-from us):
+**What the data can — and can't — give you.** Be honest about the line:
 
-- **`status = 8`** is the **current void/reversed** code. The lookup's "9 = void"
-  is stale — `status 9` doesn't appear in the data at all. Excluding 8 keeps the
-  rollup to real, non-reversed tickets.
-- **`mode = 8`** is **not a transport mode**. Modes 1–4 are pipeline/truck/rail/
-  barge; `8` is a **non-physical book adjustment** (an accounting entry). It must
-  be excluded from any physical-volume figure.
-- **`prod_cd = 6`** is **dyed (off-road) diesel** — real, physical fuel, but
-  **tax-exempt**. Whether you exclude it depends on the report (see the "why this
-  is subtle" note below).
+- **`status = 8`:** the data shows three status values (`1`, `7`, `8`) — the
+  counts differ, but the *average ticket* is uniform (~7,500 net gal), so you
+  can't pick `8` out by size. It's a meaningful minority (~8%) with an odd August
+  cluster at one terminal (see the stretch). **What it can't tell you:** that `8`
+  *means* "void." That's a label, and no row carries it.
+- **`mode = 8`:** the data shows modes `1–4` plus a small `8` (~2%). Profile it and
+  it cuts *across* products and channels with ordinary-looking volumes — which
+  already argues it's **not a transport category**. (Some mode-8 rows even carry a
+  renewable `d_code` — more evidence it's a cross-cutting flag, not a transport
+  mode.) **What it can't tell you:** what `8` actually *is*. Nothing in the rows
+  names it.
+- **`prod_cd = 6`:** the data shows `7` and `9` carry a `d_code` (and a pathway
+  tag) — they're clearly a different *kind* of product — while `6` carries no
+  `d_code`, like gasoline/ULSD/NGL/propane. It moves real, sizeable volume, and it
+  prices **between gasoline and clear diesel, leaning diesel** (a clue, not a
+  verdict). **What it can't tell you:** the exact product name.
 
-> **Push the agent if it's vague.** If it says "8 probably means void," reply:
-> *"Don't guess. Show me from the data why 8 behaves like a void and 9 doesn't
-> exist."* An intent reconstruction is a dialogue, not a hand-off.
+**Checkpoint 2a:** For each code you can state (a) what the data shows
+structurally and (b) one honest sentence on what the data *can't* settle. You have
+hypotheses, not yet conclusions.
 
-**Why `prod_cd <> 6` is the subtle one.** Dyed diesel is physically real, so it
-*belongs* in a physical-volume number — yet this query drops it. Ask the agent:
+### Step 2b — Now bring in the schema, and read it critically (10 min)
 
-> This query excludes `prod_cd = 6` (dyed diesel). Is that correct for a
-> *physical* volume rollup? When would excluding it be right, and when wrong?
-> Answer from what dyed diesel is, not from the column name.
+Now let the agent use the documentation — but treat it as a *witness*, not an
+oracle. It's known to be partial and, in places, stale.
 
-The honest answer: for **taxable** volume, dropping dyed diesel is right (it's
-tax-exempt). For a pure **physical** movement total, dyed diesel should arguably
-be **kept**. So this query — labelled just "monthly volumes" — is quietly a
-*taxable-ish* view, not a clean physical one. **That ambiguity is a finding.**
-Note it as an open question for a human, not something the data alone can settle.
+> Now you may read `DATA-DICTIONARY.md` and query `code_ref`. For each of
+> `status = 8`, `mode = 8`, `prod_cd = 6`: does the documentation even cover the
+> value? Where does it agree or **disagree** with what the data showed in 2a?
+> The lookup is known to be out of date — point out exactly where. Then give me
+> your best decoded meaning, your confidence, and anything that **neither the data
+> nor the docs** can settle — flag those as questions for a human.
 
-**Checkpoint 2:** You can state, in one sentence each, what `status = 8`,
-`mode = 8`, and `prod_cd = 6` mean **and** why each is excluded — each backed by a
-query you ran yourself. You've also flagged that `prod_cd <> 6` makes this a
-taxable-leaning view, not a pure physical one.
+```sql
+-- the lookup, where it exists, and where it's wrong:
+SELECT * FROM code_ref WHERE code_type = 'status';   -- lists 1, 9 — but the data has 1,7,8
+SELECT COUNT(*) FROM lifts WHERE status = 9;          -- 0: the lookup's "void" is a ghost
+```
+
+Here's where each code lands — and notice they land in three *different* places:
+
+- **`status = 8` — the stale lookup cracks it.** `code_ref` documents `9 = Void
+  (DEPRECATED – pre-2021 migration)`, but `9` never appears and `8` is
+  undocumented. Read critically, the *drift itself* is the evidence: the void
+  convention moved, the old code retired, and `8` is the current void. Data +
+  a skeptically-read lookup ⇒ **"8 = void/reversed."** Exclude reversed tickets so
+  the rollup counts only real transactions.
+- **`mode = 8` — nothing names it. Take it to a human.** `code_ref` lists modes
+  `1–4`; the dictionary says "other modes exist — investigate." Neither names
+  `8`. The data already told you it's a small, non-`1–4` value. The honest
+  deliverable is: *"`mode = 8` is an undocumented, non-transport code; it's
+  excluded from a movement total, but I can't prove its meaning from anything we
+  have — confirm with whoever owns this feed."* Resist the urge to invent
+  "book adjustment" or "barge"; you can't show either from the data.
+- **`prod_cd = 6` — the data gives you the finding, the label needs a human.** The
+  dictionary documents `1–4` and says more exist. From 2a you already know `6` is
+  a conventional product (no `d_code`) that moves real volume and prices like a
+  diesel. So the load-bearing conclusion is **behavioral and data-proven**:
+  *dropping `prod_cd = 6` removes a whole class of real fuel, which makes this
+  query a **taxable-leaning** view, not a clean physical-volume total* (see the
+  next box). The specific name ("dyed / off-road diesel, tax-exempt") is a
+  reasonable hypothesis to confirm with a human — not something the rows prove.
+
+> **Push the agent if it overclaims.** If it states "mode 8 = book adjustment" or
+> "prod 6 = dyed diesel" as fact, ask: *"Show me the row that proves that."* It
+> can't — and getting it to say *"I can't prove this from the data"* is the win.
+> An honest "ask a human" beats a confident guess every time.
+
+**The `prod_cd <> 6` finding — prove the behavior.** Dyed-or-not, `prod_cd = 6` is
+real fuel that physically moved, and this query drops it. So a query labelled
+"monthly volumes" is quietly measuring something narrower. Prove it from the data:
+
+> With the `prod_cd <> 6` filter, this is the opaque query. **Without** it, you get
+> all physical product. Run both for one terminal and show me the gap — then tell
+> me whether "monthly volumes" is an honest label.
+
+That gap is the headline: behavior labelled "volumes" actually behaves like
+"taxable." **Note it as an open question for a human** ("should this be physical or
+taxable?") — the data proves the discrepancy; it can't tell you which side is the
+mistake.
+
+**Checkpoint 2b:** For each of the three codes you can say *where your answer came
+from* — `status` from the stale lookup read critically, `mode` from nowhere (a
+flagged unknown), `prod` a data-proven behavioral finding plus a to-confirm label.
 
 ---
 
@@ -211,9 +270,13 @@ You'll see something like:
 ```
 SCAN lifts
 USE TEMP B-TREE FOR GROUP BY
+USE TEMP B-TREE FOR ORDER BY
 ```
 
-`SCAN lifts` means SQLite reads **every one of the ~50,000 rows** and checks the
+(Two `TEMP B-TREE` lines are normal — one for the `GROUP BY`, one for the
+`ORDER BY`. They're the aggregation and the sort, not the row lookup; only the
+`SCAN`/`SEARCH` line is what we're about to change.) `SCAN lifts` means SQLite
+reads **every one of the ~50,000 rows** and checks the
 date on each — even though only one month qualifies. There is no index on
 `lifts`; that's deliberate, and that's the lesson. (`SCAN` = read everything;
 `SEARCH` = jump to the rows you need. See D2.)
@@ -256,11 +319,13 @@ The plan line should flip to:
 ```
 SEARCH lifts USING INDEX idx_lifts_ts (lift_ts>? AND lift_ts<?)
 USE TEMP B-TREE FOR GROUP BY
+USE TEMP B-TREE FOR ORDER BY
 ```
 
 `SCAN` became `SEARCH ... USING INDEX`. The engine now jumps to the August rows
-instead of reading the whole table. (The `GROUP BY` temp B-tree stays — that's
-the aggregation, expected.)
+instead of reading the whole table. (Both temp B-trees — GROUP BY and ORDER BY —
+stay; they're the aggregation and the sort, expected. Only the first line
+changed.)
 
 **Two things to verify, like a reviewer:**
 
@@ -291,59 +356,79 @@ could engage; and you confirmed the result set is unchanged.
 
 ---
 
-## Step 4 — Don't trust the comments (8 min)
+## Step 4 — Don't trust the comments (10 min)
 
-The query had no comments. The script you'll meet for homework — `data/vol_report.py`
-— is the opposite: it's *full* of them, and several **lie**. A quick taste now, so
-the homework starts from a clear stance.
+The query had no comments at all — you had to infer everything. Code with
+*comments* has the opposite hazard: the comments can be confidently wrong. There's
+a tiny desk helper in your repo, `sessions/session-3/retail_gas_report.py`, that
+makes the point. It runs fine; its comments are another matter.
 
 **Point the agent at it:**
 
-> Read `data/vol_report.py`. Don't trust the comments. Pick two filters and, for
-> each, tell me (a) what the line literally does, (b) what the comment claims, and
-> (c) which one the data in `data/us_energy.sqlite` supports — run a query to
-> settle it.
+> Read `sessions/session-3/retail_gas_report.py`. For each comment in
+> `retail_gas_by_term`, tell me (a) what the line literally does, (b) what the
+> comment claims, and (c) which one the data in `data/us_energy.sqlite` supports —
+> run a query to settle each. Flag every place they disagree.
 
-You'll find gaps like these (don't take our word — make the agent prove each):
+There are **three** gaps to catch — make the agent prove each from the rows:
 
-| The comment says | What the line does | The reality |
+| The comment says | What the line does | Settle it with the data |
 |---|---|---|
-| `# skip test + voided tickets (status 9)` | filters `status == 8` | Voids are `8`, not the `9` the comment names. The comment is a fossil. |
-| `# barge loads are reconciled upstream ... drop them` (on `mode == 8`) | filters `mode == 8` | Mode 8 is a **book adjustment**, not barge. Barge is mode **4** — and it's *kept*. The comment names the wrong thing entirely. |
+| `# wholesale customers only (channel 1)` | keeps `channel_id == 1` | `SELECT * FROM channels;` → **1 = Branded Retail**. Channel 1 is *retail*; the comment names the wrong thing (the function is even called `retail_gas`). |
+| `# all grades of gasoline (product codes 1 and 2)` | keeps only `prod_cd == 1` | The code never keeps `2` — and `2 = ULSD (clear diesel)`, not gasoline. The comment over-claims the set *and* misnames the product. |
+| `# voided tickets are already filtered out upstream` | there is **no** status filter | `... WHERE channel_id=1 AND prod_cd=1 AND status=8 AND substr(lift_ts,1,7)='2025-08'` returns a non-zero count — voids are being summed. The comment claims a behavior the code doesn't have. |
 
-**The method, in one line:** for each filter, ask *"if I deleted this line, which
-rows would change?"* — then name those rows from the data. That is the true
-intent, and it is frequently **not** what the comment says.
+**The method, in one line:** for each comment, ask *"if this line did what the
+comment says, what would the data look like?"* — then check. Comments lie in two
+directions: **naming the wrong thing** (lies 1–2) and **claiming a behavior that
+isn't there** (lie 3). Catch both.
 
-**Checkpoint 4:** You've caught at least one — ideally several — of the comments in
-`vol_report.py` that contradict the code's actual behavior, with a query that proves
-each gap. (There are five lying comments in all; the full hunt is Homework #2.)
+**Checkpoint 4:** You've caught all three comment/behaviour gaps, each with a
+query that proves it. (This is the warm-up. Homework #2 runs the full version on a
+real legacy script — `vol_report.py` — that ships with the homework brief.)
 
 ---
 
 ## If you have time — find the anomaly (stretch)
 
-In Step 2 you grouped `status = 8` rows by terminal and month. Look again at the
-top of that list. **One terminal-month sticks out far above the rest.** Ask:
+Back in Step 2a you grouped status values by size. Group the voids (`status = 8`)
+by terminal and month instead, and look at the top:
 
-> Among voided (`status = 8`) lifts, is any single terminal-and-month unusually
-> high relative to the others? Quantify it: that terminal's void rate that month
-> versus the dataset-wide void rate.
+> Among `status = 8` lifts, is any single terminal-and-month unusually high
+> relative to the others? Quantify it: that terminal's void rate that month versus
+> the dataset-wide void rate.
 
-This is a **data-quality anomaly** to *find*, not be told — exactly the kind of
-thing legacy comprehension surfaces. Note what you find as an open question for a
-human ("why the spike?"), the same way you'd flag it on a real handoff.
+```sql
+SELECT term_id, substr(lift_ts,1,7) AS ym, COUNT(*)
+FROM lifts WHERE status = 8
+GROUP BY term_id, ym ORDER BY COUNT(*) DESC LIMIT 5;
+```
 
-**Not spotting it live is fine** — it's a bonus that rewards thorough profiling, not a required finding.
+One terminal-month sticks out far above the rest. This is a **data-quality anomaly
+to find, not be told** — exactly the kind of thing legacy comprehension surfaces.
+Note what you find as an open question for a human ("why the spike?"), the way
+you'd flag it on a real handoff.
+
+**Not spotting it live is fine** — it's a bonus that rewards thorough profiling.
 
 ---
 
 ## Wrap-up (5 min)
 
+**Your evidence ledger** — the one-glance summary of the lab. Where did each answer
+come from? (Notice the last column is never empty.)
+
+| Code | What the data alone showed | What the docs added | The human question |
+|---|---|---|---|
+| `status = 8` | undocumented status, ~8%, normal-sized ticket, an Aug cluster | stale lookup: void was `9` (now gone) ⇒ `8` is the live void | "why the GRB August void spike?" |
+| `mode = 8` | small (~2%), cuts across products — not a transport category | docs cover only 1–4; nothing names `8` | **"what *is* mode 8?" — ask the feed owner** |
+| `prod_cd = 6` | a real product (no d_code), real volume, dropped by the query | docs cover only 1–4; nothing names `6` | "is dropping it right — is this physical or taxable?" |
+
 Quick reflection before we debrief:
 
-1. Which magic value took the longest to pin down, and what finally settled it —
-   the lookup, or the data?
+1. For each magic value, **where did your answer come from** — the data, the
+   (stale) lookup read critically, or "couldn't tell, ask a human"? Notice they
+   weren't all the same.
 2. The query was labelled just "monthly volumes." After decoding `prod_cd <> 6`,
    is that label honest? What would you rename it?
 3. If you handed the next engineer one sentence about this query before they
@@ -358,14 +443,15 @@ By the end of Exercise 1 you have, for a query you'd never seen:
 | Artifact | What it is |
 |---|---|
 | Literal description | What one output row is and what each filter mechanically does |
-| Decoded magic values | What `8`/`8`/`6` mean, each proven from the rows |
-| Intent per filter | *Why* each exclusion is there — including the taxable-vs-physical ambiguity |
+| A data-only read | What the rows alone establish about `8`/`8`/`6` — and what they can't |
+| A schema cross-check | Where the lookup/dictionary confirm, drift, or stay silent |
+| Honest meanings | `status` (lookup, read critically), `mode` (unknown → human), `prod` (data-proven taxable-leaning finding + a label to confirm) |
 | A faster, equivalent query | Non-sargable filter rewritten; index added; plan flipped SCAN → SEARCH |
-| Comment-rot findings | Lying comments in `vol_report.py` caught against behavior (there are five) |
+| Comment-rot findings | Three lying comments in a helper script, caught against behaviour |
 
-That's the comprehension move end to end: **literal → decode → intent → read the
-machine → distrust the comments.** Homework #2 runs the full version on
-`vol_report.py`.
+That's the comprehension move end to end: **read the data, cross-check the docs,
+read the machine, distrust the comments — and know which answers you can't settle.**
+Homework #2 runs the full version on `vol_report.py`.
 
 ---
 
@@ -374,9 +460,9 @@ machine → distrust the comments.** Homework #2 runs the full version on
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `sqlite3: command not found` | CLI not installed | Use the Python snippet in `../../data/README.md` — standard library, no installs. |
-| The agent answers from column names / the dictionary, not the data | It skipped running a query | Reply: *"Don't infer from the name or `DATA-DICTIONARY.md`. Run a query against the database and show me the rows."* |
+| In Step 2a the agent reads the dictionary anyway | It defaulted to the docs | Re-issue: *"Ignore `DATA-DICTIONARY.md` and `code_ref` for now. Use only queries against `lifts`. What can the rows alone tell us?"* |
+| The agent states a meaning as fact ("mode 8 = book adjustment") | It's guessing past the evidence | *"Show me the row that proves it. If you can't, say so and flag it for a human."* |
 | `EXPLAIN QUERY PLAN` still shows `SCAN` after you added the index | You left the `substr(...)` filter in place (non-sargable) | Rewrite the date filter to the half-open range first, *then* the index engages. |
 | The agent "added an index" but didn't prove it | It asserted instead of showing | Make it paste the before/after `EXPLAIN QUERY PLAN`. The proof is the line flipping to `SEARCH`. |
 | You're not sure the index changed the answer | Reasonable doubt — check it | Run the query before and after and diff. An index changes the plan, never the result. |
-| The agent confidently restates a comment as fact | Comments read like authority | *"That's the comment. What do the rows say? Run a query."* |
 | You accidentally indexed and want a clean slate | — | `DROP INDEX IF EXISTS idx_lifts_ts;` — or just re-clone the `data/` folder. |

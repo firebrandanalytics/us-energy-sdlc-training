@@ -73,6 +73,10 @@ python3 -c "import sqlite3; print(sqlite3.connect('../../data/us_energy.sqlite')
 
 ### See what you're replacing
 
+> You created `data/vol_report.py` during Homework #2. If you skipped HW2, grab the
+> listing from `homework/homework-2-brief.md` and save it to `data/vol_report.py`
+> before running the command below.
+
 ```bash
 # The legacy script hard-codes its DB name, so run it from inside data/:
 ( cd ../../data && python3 vol_report.py 2025-08 )
@@ -213,6 +217,12 @@ What a good extraction surfaces (push the agent if it misses these):
   never appears in the data. (`SELECT COUNT(*) FROM lifts WHERE status = 9;` → 0.)
 - The "barge" exclusion actually drops `mode = 8` — which is a **book adjustment**,
   not barge. Barge is `mode = 4`, and it's kept.
+
+  > **Bridge from Session 3:** there, the data and the docs couldn't *name* `mode = 8`,
+  > so the honest call was "exclude it, but confirm with a human." Treat that as
+  > done — for this build, assume the feed owner confirmed `mode = 8` is a
+  > non-physical book adjustment. That's the normal arc: flag the unknown, get it
+  > confirmed, then build on the confirmed fact (and write it into the spec).
 - A "scale up, stored in hundreds" comment that the code **does not** act on —
   gallons are summed as-is.
 - The taxable rollup drops `prod_cd = 6` (dyed off-road diesel) **but keeps

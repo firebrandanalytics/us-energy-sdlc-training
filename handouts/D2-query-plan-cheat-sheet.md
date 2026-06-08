@@ -29,7 +29,7 @@ A query plan is a short tree. Each line is a step. The words that carry the most
 | `USE TEMP B-TREE FOR DISTINCT` | Same, to de-duplicate | As above |
 | `SCAN <table> USING COVERING INDEX <name>` | Read straight from the index, never touching the table | Excellent — the index alone answers the query |
 
-> "Selective" = the filter keeps a small fraction of rows. A date filter that keeps one month out of twelve is selective; `status <> 8` (which keeps ~99% of rows) is not — an index won't help the latter.
+> "Selective" = the filter keeps a small fraction of rows. A date filter that keeps one month out of twelve is selective; `status <> 8` (which keeps ~92% of rows) is not — an index won't help the latter.
 
 ---
 
@@ -69,6 +69,8 @@ USE TEMP B-TREE FOR GROUP BY
 ```
 
 `SCAN` became `SEARCH ... USING INDEX`. The engine now jumps straight to the August rows via the index instead of reading the whole table. (The `GROUP BY` temp B-tree stays — that's the aggregation, not the row lookup, and it's expected.)
+
+> The example above has no `ORDER BY`. The full Exercise 1 query does (`ORDER BY net DESC`), so its plan carries a **second** line — `USE TEMP B-TREE FOR ORDER BY` — both before and after the index. That's the sort; it's expected and the index doesn't remove it. Only the `SCAN`→`SEARCH` line changes.
 
 > **Note for the lab:** the shipped database has **no** index by design, so your first plan will show `SCAN`. Adding the index is part of the exercise.
 

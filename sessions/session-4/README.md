@@ -31,7 +31,9 @@ dashboard.
 You'll also use, from elsewhere in the repo:
 
 - `data/us_energy.sqlite` — the working database.
-- `data/vol_report.py` — the legacy rollup script you're replacing.
+- `data/vol_report.py` — the legacy rollup script you're replacing. You created this
+  during Homework #2. If you skipped HW2, grab the listing from
+  `homework/homework-2-brief.md` and save it to `data/vol_report.py` first.
 - `handouts/D4-data-spec-template.md` — the data-spec template you'll fill in.
 - `handouts/D5-output-contract-and-dashboard.md` — the output-contract pattern and
   a FastAPI quickstart (you'll lean on it for Homework 3 and Session 5).

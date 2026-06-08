@@ -32,8 +32,11 @@ The through-line from Session 1 carries straight in:
 
 That stance is the whole point of this session. The dataset is built so you
 *can't* solve it by reading column names: the codes are bare integers, one column
-means two different things, the lookup table is out of date, and a legacy script's
-comments describe what it used to do, not what it does now.
+means two different things, and the lookup table is out of date — so some codes
+can be cracked from the data, some only with the (stale) schema read critically,
+and some you can't settle at all and must take to a human. (In your homework
+you'll add the next layer: a legacy script whose comments describe what it used to
+do, not what it does now.)
 
 ---
 
@@ -42,7 +45,8 @@ comments describe what it used to do, not what it does now.
 - Point the agent at a query you didn't write and get back **what it does and why
   each filter is there** — the intent, not just a paraphrase.
 - Reverse-engineer a **"magic value"** (a bare code like `status = 8`) from the
-  data when the lookup table is silent or wrong.
+  data and a critically-read (stale) lookup — and recognise when a code **can't**
+  be settled from what you have and needs a human.
 - Read an **`EXPLAIN QUERY PLAN`**, recognise a slow full-table scan, and fix it
   with an index — with the agent explaining the plan in plain language.
 - Catch a **lying comment** by checking the code's behavior against what it claims.
@@ -55,26 +59,29 @@ comments describe what it used to do, not what it does now.
 
 1. **Share-back from Homework #1** (~10 min) — a new command-line technique you
    learned from the agent: what it does, and when you'd use it.
-2. **Meet the dataset** (~15 min) — a tour of the fuel-movements database
-   (terminals, lifts, RIN credits) and how to open it.
-3. **Comprehending a query you didn't write** (~25 min) — the agent explains
-   *what* an opaque query does and, harder, *why* each magic filter is there.
-4. **When the schema fights back** (~20 min) — generic column names and magic
-   values; getting the agent to reverse-engineer their meaning from the data.
-5. **Reading the machine** (~20 min) — `EXPLAIN QUERY PLAN`, spotting a full
+2. **Meet the dataset** (~18 min) — a guided walk through the schema of the
+   fuel-movements database (terminals, lifts, RIN credits) and how to open it.
+3. **First pass, no agent** (~12 min) — read the opaque query yourself, then we
+   compare what made it hard. (You appreciate the agent more for trying first.)
+4. **What the query does** (~12 min) — bring in the agent for the literal read:
+   the grain, the sums, and what each filter keeps and drops.
+5. **Decode the magic values** (~22 min) — the heart of the session: figure out
+   the bare codes **from the data first**, then cross-check the (stale) schema —
+   and flag what neither can settle.
+6. **Reading the machine** (~16 min) — `EXPLAIN QUERY PLAN`, spotting a full
    scan, and fixing it with an index.
-6. **Don't trust the comments** (~10 min) — why stale comments lead you astray,
-   and treating behavior as the source of truth.
-7. **Working safely with real data** (~12 min) — scoping access; keeping
-   connection strings and PII out of the agent; a quick demo of generating and
-   using a secret the agent never sees.
-8. **Wrap and Homework #2** (~10 min) — build an "intent dossier" for a legacy
+7. **Don't trust the comments** (~10 min) — catch lying comments in a small
+   script by checking each claim against the data.
+8. **Working safely with real data** (~8 min) — scoping access; keeping
+   connection strings and PII out of the agent; a quick secret-the-agent-never-sees demo.
+9. **Wrap and Homework #2** (~10 min) — build an "intent dossier" for a legacy
    script: what it truly computes, and which comments are lying.
 
-The hands-on **Exercise 1** runs through beats 3–6: you point the agent at an
-opaque query over the dataset and have it explain the intent and the execution
-plan. The step-by-step is in **[`LAB-GUIDE.md`](LAB-GUIDE.md)** — start there when
-we reach the lab.
+The hands-on **Exercise 1** runs from your first solo pass (beat 3) through the
+comment hunt (beat 7): you decode an opaque query over the dataset — **data first,
+schema second** — read its execution plan, and catch a lying comment. The
+step-by-step is in **[`LAB-GUIDE.md`](LAB-GUIDE.md)** — start there when we reach
+the lab.
 
 ---
 
@@ -104,10 +111,12 @@ No need to study the data beforehand. Coming to it cold is part of the exercise.
 |---|---|
 | `README.md` | This file — the session overview. |
 | `LAB-GUIDE.md` | The Exercise 1 walkthrough. Open it when we reach the lab. |
+| `retail_gas_report.py` | A tiny helper with lying comments — you'll catch them in the lab's last step. |
 
 The dataset itself lives in [`../../data/`](../../data/): the database
-(`us_energy.sqlite`), a deliberately partial data dictionary, and the legacy
-script (`vol_report.py`) you'll meet today and dissect for homework.
+(`us_energy.sqlite`) and a deliberately partial data dictionary. The legacy script
+you'll dissect for **Homework #2** ships *with the homework brief*, not in `data/` —
+Session 3 is deliberately about reading the data on its own, with no script to lean on.
 
 ---
 
@@ -126,9 +135,9 @@ These are in [`../../handouts/`](../../handouts/). Pull them up as we go:
 
 ## Homework after this session
 
-**Homework #2 — the intent dossier.** Point Claude Code at the legacy script
-`data/vol_report.py`, work out what it *truly* computes against the dataset, and
-document which of its comments are lying. The full brief is in
+**Homework #2 — the intent dossier.** The brief includes a legacy script; you'll
+save it as `data/vol_report.py`, then point Claude Code at it, work out what it
+*truly* computes against the dataset, and document which of its comments are lying. The full brief is in
 [`../../homework/homework-2-brief.md`](../../homework/homework-2-brief.md);
 we hand it out at the end of the session.
 

@@ -78,6 +78,10 @@ everyone extends.
 The numbers must still match Session 4's service after you extend the app. Keep the
 legacy figure on screen as the anchor:
 
+> `data/vol_report.py` is the script you created in Homework #2. If you don't have
+> it, grab the listing from `homework/homework-2-brief.md` and save it to
+> `data/vol_report.py` first — or just use the service figures below as your anchor.
+
 ```bash
 ( cd ../../data && python3 vol_report.py 2025-08 )   # DAL 1,517,103 / 1,371,642
 python3 -c "import service; print(service.monthly_volumes('2025-08')[0])"

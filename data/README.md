@@ -12,8 +12,10 @@ already have).
 |---|---|
 | `us_energy.sqlite` | The database (~50k rows in the `lifts` fact table). This is the file you query. |
 | `DATA-DICTIONARY.md` | A working reference for the tables and the common codes. **Partial and slightly stale on purpose** — confirm anything important against the data itself. |
-| `vol_report.py` | A legacy reporting script (see below). |
 | `README.md` | This file. |
+
+> A legacy reporting script, `vol_report.py`, is **not** in this folder yet — it
+> arrives with **Homework #2** (see below).
 
 > The data is **synthetic** and generated for training. It is deterministic, so
 > everyone in the class is looking at exactly the same rows.
@@ -77,9 +79,9 @@ print(df.head())
 con.close()
 ```
 
-> When you run a script that hard-codes the database name (like `vol_report.py`,
-> below), run it from **inside this `data/` folder** so it can find
-> `us_energy.sqlite`.
+> When you run a script that hard-codes the database name, run it from the folder
+> that lets it find `us_energy.sqlite` — usually this `data/` folder, or wherever
+> the script's header says to run it.
 
 ### Option C — a GUI
 
@@ -109,22 +111,17 @@ dictionary is deliberately partial, so plan to verify against the data.
 
 ---
 
-## About `vol_report.py`
+## The legacy script (arrives with Homework #2)
 
-`vol_report.py` is a **legacy reporting script** the energy desk has used to roll
-up monthly volumes by terminal. It originated years ago for an older feed and has
-been extended a few times since. It still runs:
+There's a legacy reporting script — `vol_report.py` — that the energy desk has
+used for years to roll up monthly volumes by terminal. **It is deliberately not
+in this folder during Session 3.** Session 3 is about reading the *data* on its
+own terms; a script full of comments (several of which lie) would give the game
+away.
 
-```bash
-# from inside this data/ folder
-python vol_report.py 2025-08
-```
-
-It prints monthly physical and taxable volumes for the top terminals, plus a
-RIN-eligible gallons figure. You'll be reading this script closely later in the
-course — your job will be to figure out what it *actually* computes today and
-whether its comments still tell the truth. For now, it's enough to know it exists
-and that you can run it.
+You meet it in **Homework #2**: the brief (`homework/homework-2-brief.md`)
+includes the full listing and asks you to save it as `data/vol_report.py` and
+work out what it *truly* computes. From there it carries through Sessions 4 and 5.
 
 ---
 
