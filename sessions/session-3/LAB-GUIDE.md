@@ -51,6 +51,15 @@ snippet in [`../../data/README.md`](../../data/README.md) works with no installs
 **Open a Claude Code session at the repo root** (so it can read both the database
 and the data dictionary). Everything below is run through that session.
 
+> **Who runs the queries? The agent does — you direct and review.** You won't be
+> typing SQL by hand. You tell Claude Code what to find — *"run a COUNT of each
+> status value and show me the rows"* — and it runs the query against the file (it
+> uses the `sqlite3` CLI or Python under the hood) and shows you the result. Your
+> job is to read what comes back and decide whether it actually proves the claim.
+> *(Want to poke the data directly yourself? Optional — `data/README.md` has three
+> easy ways: the interactive `sqlite3` prompt, a copy-paste Python snippet that
+> needs no installs, or a free GUI like DB Browser for SQLite.)*
+
 Have these handouts open: **D2** (query plans) and **D3** (magic values). Skim
 **D1** (data glossary) if the fuel terms are unfamiliar.
 
@@ -127,8 +136,9 @@ dictionary.
 > rows. For each, tell me (a) the value's meaning, (b) the evidence query you
 > ran, and (c) *why* a volume rollup would exclude it.
 
-The agent should run something like these (run them yourself too — verifying *is*
-the skill):
+Direct the agent to run something like these — then read each result and decide
+whether it really proves the claim. That scrutiny *is* the skill; you don't have to
+write the SQL yourself (though you can — see `data/README.md`):
 
 ```sql
 -- Distribution: which status codes actually occur? (8 appears; the lookup's 9 doesn't)
