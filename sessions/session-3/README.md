@@ -65,8 +65,9 @@ comments describe what it used to do, not what it does now.
    scan, and fixing it with an index.
 6. **Don't trust the comments** (~10 min) — why stale comments lead you astray,
    and treating behavior as the source of truth.
-7. **Working safely with real data** (~10 min) — scoping access; keeping
-   connection strings and PII out of the agent.
+7. **Working safely with real data** (~12 min) — scoping access; keeping
+   connection strings and PII out of the agent; a quick demo of generating and
+   using a secret the agent never sees.
 8. **Wrap and Homework #2** (~10 min) — build an "intent dossier" for a legacy
    script: what it truly computes, and which comments are lying.
 
