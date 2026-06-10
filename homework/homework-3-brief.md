@@ -57,9 +57,7 @@ where you'll extend it next session). Bring your Session 4 service over from
 cd sessions/session-5                       # in the course repo
 cp ../../../<initials>-volume-service/service.py ./service.py        # adjust the path to YOUR repo
 cp ../../../<initials>-volume-service/test_service.py ./test_service.py 2>/dev/null || true
-python3 -m venv venv
-source venv/bin/activate                    # Windows Git Bash: source venv/Scripts/activate
-pip install fastapi uvicorn jinja2 pytest
+python3 -m pip install fastapi uvicorn jinja2     # pytest you already have from Session 4
 ```
 
 Your service reads its database path from the **`DB_PATH`** environment variable

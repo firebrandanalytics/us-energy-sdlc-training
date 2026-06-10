@@ -63,10 +63,8 @@ az repos create --name <initials>-volume-service --query "remoteUrl" -o tsv
 git clone <the URL it printed>            # "cloned an empty repository" = correct
 cd <initials>-volume-service
 
-# 2) A venv + pytest, inside YOUR repo:
-python3 -m venv venv
-source venv/bin/activate            # Windows Git Bash: source venv/Scripts/activate
-pip install pytest
+# 2) pytest (the one package today — install it once, no venv needed):
+python3 -m pip install pytest
 
 # 3) Start Claude Code HERE (in your repo):
 claude
@@ -431,7 +429,7 @@ a reviewable unit:
 ```
 Ship today's work on our story branch:
 1. Stage today's artifacts: the spec, stories.md, the skill, test_service.py,
-   service.py, ARCHITECTURE.md — not venv/ or logs/.
+   service.py, ARCHITECTURE.md — not logs/ (it's in .gitignore).
 2. DRAFT the commit message and SHOW IT TO ME for approval BEFORE running git
    commit: an imperative subject naming the story, and a body with the WHY (the
    decisions) and the EVIDENCE (tests green; reconciles 2025-08 to the gallon;

@@ -66,8 +66,7 @@ templates (HTML), and a little CSS. No JavaScript framework required.
 ### Install & run
 
 ```bash
-python3 -m venv venv && source venv/bin/activate    # Windows: venv\Scripts\activate
-pip install fastapi uvicorn jinja2
+python3 -m pip install fastapi uvicorn jinja2
 uvicorn app:app --reload                            # open http://localhost:8000
 ```
 
