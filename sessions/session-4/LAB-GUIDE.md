@@ -229,8 +229,9 @@ correctly"* is not a criterion; *"DAL 2025-08 physical = 1,517,103"* is.
 For each story in stories.md, create an Azure DevOps work item:
 az boards work-item create --type "User Story" --title "<story title>"
 --description "<the story + its acceptance criteria>". (If the project's process
-doesn't have "User Story", use --type Issue.) Then list the created IDs and put
-each ID back into stories.md next to its story.
+doesn't have "User Story", use --type Issue. DevOps renders descriptions as
+HTML — use <br/> for line breaks so the board stays readable.) Then list the
+created IDs and put each ID back into stories.md next to its story.
 ```
 
 Note your **service story's work-item ID** — a change request is going to land on
@@ -284,8 +285,9 @@ us-energy-volume-rules skill. The plan must include:
    (physical >= taxable >= 0; one row per terminal-month), and the exact 2025-08
    reconciliation anchors — take them from the printed output of
    "cd ../us-energy-sdlc-training/data && python3 vol_report.py 2025-08", not from memory.
-2. The functions — monthly_volumes(month) and months() — and exactly what each
-   RETURNS (list of dicts in the contract shape).
+2. The functions — monthly_volumes(month=None) (one month, or every month when
+   omitted) and months() — and exactly what each RETURNS (list of dicts in the
+   contract shape).
 3. The exact SQL for physical and taxable: every filter named, the gallon column
    named, the month bounded by a RANGE on lift_ts (never substr/strftime around
    the column).
@@ -352,11 +354,12 @@ the evidence, then say done or not done.
 
 That habit — **the agent proves "done" from the tests, the log, and the database
 before it's allowed to say the word** — is the single most transferable thing in
-this course.
+this course. (And note the run-log filename this step printed — Step 6 diffs
+against it as the "before".)
 
 ```bash
-# the 30-second proof it's a service, not a script:
-python3 -c "import service; rows = service.monthly_volumes('2025-08'); print(rows[0]); print(len(rows), 'rows')"
+# the 30-second proof it's a service, not a script (ordering-agnostic — pick DAL out):
+python3 -c "import service; rows = service.monthly_volumes('2025-08'); print([r for r in rows if r['terminal']=='DAL'][0]); print(len(rows), 'rows')"
 # -> {'terminal': 'DAL', 'month': '2025-08', 'physical_gal': 1517103, 'taxable_gal': 1371642}
 ```
 
@@ -391,7 +394,8 @@ unchanged by comparing run logs."
 
 ```
 Change request: add lift_count (int — the number of qualifying tickets behind
-each row's totals) to every returned row. This is a CONTRACT change, so do it
+each row's totals; count the PHYSICAL qualifying set, i.e. dyed-diesel tickets
+still count — they're real tickets, just tax-exempt) to every returned row. This is a CONTRACT change, so do it
 tests-first: update the contract test deliberately (the exact-fields assertion
 must now include lift_count) and add one anchor for it, then implement, then run
 to green. Then run the CLI again and COMPARE the new run log with the previous
@@ -460,8 +464,9 @@ a reviewable unit:
 
 ```
 Ship today's work on our story branch:
-1. Stage today's artifacts: the spec, stories.md, the skill, test_service.py,
-   service.py, ARCHITECTURE.md — not logs/ (it's in .gitignore).
+1. Stage today's artifacts: the spec, stories.md, the skill, PLAN.md,
+   test_service.py, service.py, your CLI if it's a separate file, and
+   ARCHITECTURE.md — not logs/ (it's in .gitignore).
 2. DRAFT the commit message and SHOW IT TO ME for approval BEFORE running git
    commit: an imperative subject naming the story, and a body with the WHY (the
    decisions) and the EVIDENCE (tests green; reconciles 2025-08 to the gallon;
