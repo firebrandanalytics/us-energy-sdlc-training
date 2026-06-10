@@ -173,11 +173,12 @@ body-only facts a generic answer can't fake.
 
 ---
 
-## Step 3 — Stories, onto the board (10 min)
+## Step 3 — Stories on the board · the repo · your branch (12 min)
 
 A spec says what *right* means; **stories** slice it into shippable, checkable
 work — and today they go on the **real Azure DevOps board**, because that's
-where work lives at U.S. Energy.
+where work lives at U.S. Energy. Then the work gets a *home* — repo and branch —
+**before any code exists**, because that's the order real work happens in.
 
 **First, draft them:**
 
@@ -211,8 +212,27 @@ each ID back into stories.md next to its story.
 Note your **service story's work-item ID** — a change request is going to land on
 it later, and Session 5 closes it.
 
-> **Fallback (no DevOps yet):** `stories.md` *is* the artifact — IDs get created
-> in Session 5 instead, nothing else changes. Keep moving.
+**Now the repo and the branch.** One GitHub habit to unlearn here: in Azure
+DevOps, work items don't live *inside* a repo (the way GitHub issues do) — they
+live at the **project** level, and get tied to your repo through **branch and
+pull-request links**. So: repo first, then a branch named for your story, and the
+linkage builds itself from there.
+
+```
+Set up my repo and working branch:
+1. Create a repo for me: az repos create --name <initials>-volume-service
+2. Add it to this clone as a remote named "devops" and push main to it.
+3. Create and switch to a branch named story/<my-service-story-ID>-volume-service
+   and push that too.
+Show me the remote URL and the branch when done.
+```
+
+Everything you build from here happens on that branch — and lands on the board's
+radar the moment the PR links it to your story.
+
+> **Fallback (no DevOps yet):** `stories.md` *is* the stories artifact, and
+> `git switch -c story/volume-service` gives you the same branch locally — the
+> remote arrives in Session 5. Nothing else changes. Keep moving.
 
 ---
 
@@ -380,42 +400,53 @@ python3 -m pydoc -w service        # writes service.html — open it in a browse
 
 ---
 
-## Step 8 — Ship it: repo, branch, commit, PR (8 min)
+## Step 8 — Ship it: commit + PR (8 min)
 
-Real work ends in a reviewable unit. Today it gets a real home:
+Your repo and branch have existed since Step 3 — now the work lands on them, as
+a reviewable unit:
 
 ```
-Ship today's work:
-1. Create a repo for me in Azure DevOps: az repos create --name <initials>-volume-service.
-2. In this course repo, create branch s4/<initials>; stage and commit today's
-   artifacts (the spec, stories.md, the skill, test_service.py, service.py,
-   ARCHITECTURE.md — not venv/ or logs/). Write the commit message yourself:
-   imperative subject naming the story; a body with the WHY (the decisions) and
-   the EVIDENCE (tests green; reconciles 2025-08 to the gallon; change verified
-   by log comparison).
-3. Add the new repo as a remote and push main and the branch there.
-4. Draft PR.md: the pull-request description — title, summary of decisions, test
-   evidence, the work items it touches.
+Ship today's work on our story branch:
+1. Stage today's artifacts: the spec, stories.md, the skill, test_service.py,
+   service.py, ARCHITECTURE.md — not venv/ or logs/.
+2. DRAFT the commit message and SHOW IT TO ME for approval BEFORE running git
+   commit: an imperative subject naming the story, and a body with the WHY (the
+   decisions) and the EVIDENCE (tests green; reconciles 2025-08 to the gallon;
+   change verified by run-log comparison).
+3. After I approve the message: commit, and push the branch to the devops remote.
+4. Draft PR.md: the pull-request description — title, summary of decisions, the
+   evidence, and the work items it touches.
 ```
 
-**Read the commit message** the way a reviewer six months out will: does it say
-*why*, or just *what*?
+> **Why "show me the message first":** told simply to commit, the agent writes a
+> perfectly reasonable message and runs the commit in one stroke — the message
+> flashes by *inside* the approval prompt, where you'd need `Ctrl+E` to even see
+> it. Asking for the draft first makes the review explicit. Read it the way the
+> reviewer six months out will: does it say **why**, or just *what*?
 
 **Stretch (DevOps working + time to spare):** open the real PR now and leave it
-open — `az repos pr create --source-branch s4/<initials> --target-branch main
---title "..." --description "$(cat PR.md)" --work-items <id>`. **Don't complete
-it.** Session 5 starts with a clean-context agent reviewing it, then the merge,
-then the ticket close.
+open — `az repos pr create --source-branch story/<id>-volume-service
+--target-branch main --title "..." --description "$(cat PR.md)"
+--work-items <id>`. **Don't complete it.** Session 5 starts with a clean-context
+agent reviewing it, then the merge, then the ticket close.
 
-> **Fallback (no DevOps):** the local branch + commit + PR.md is the complete
-> deliverable; the push and PR happen at the top of Session 5.
+> **Fallback (no DevOps):** the local branch + approved commit + PR.md is the
+> complete deliverable; the push and PR happen at the top of Session 5.
 
 ---
 
-## Sidebar — while the agent works: make it explain (optional, any time)
+## Sidebar — while the agent works: `/btw`, and make it explain (optional, any time)
 
-Any moment you're waiting — or anything in the generated code you wouldn't want
-to defend in review — turn the agent into the explainer (the Session 3 grounded
+**The keeping-up tool: `/btw`.** While the agent is mid-build, type
+`/btw <question>` — *"what are you doing right now?"*, *"what does sargable
+mean?"*, *"why did that test fail?"* — and a quick answer appears in a side
+overlay **without touching the main task or the conversation history**. It sees
+everything so far but can't run tools, so it's for *understanding* questions, not
+new work. Dismiss with `Esc`. (It's the polite version of interrupting — use it
+freely; that's what it's for.)
+
+For anything deeper — or anything in the generated code you wouldn't want to
+defend in review — turn the agent into the explainer (the Session 3 grounded
 move, now on *your* code):
 
 > Walk me through service.py top to bottom — what each function does and why
@@ -435,22 +466,24 @@ Understanding the code you ship is not optional just because you didn't type it.
 
 ---
 
-## Pacing (elapsed from the start of the session)
+## How the session runs (two work blocks)
 
-The first ~12 minutes are the HW2 share-back and the loop framing — the lab
-starts after that.
+We talk through the first half of the deck, then **you work Steps 1–4 in one
+block (~25–30 min)**. We reconvene for the second half of the deck, then **you
+work Steps 5–8 (~25–30 min)**. Then the debrief conversation.
 
-| Elapsed | Where you should be |
+| Elapsed | What's happening |
 |---:|---|
-| 30 | Spec + contract drafted |
-| 40 | Skill written, reviewed, loading in a fresh session |
-| 50 | Stories drafted **and on the board** (IDs noted) |
-| 62 | Plan **read** and approved; the build is running |
-| 72 | Green; **tests read**; service proven to return rows |
-| 80 | Validation evidence shown: pytest + reconcile + **log ↔ database** |
-| 92 | Change landed: contract test updated, green again, **log-vs-log diff** clean, ticket commented |
-| 100 | ARCHITECTURE.md generated and **read** |
-| 108 | Shipped: repo + branch + commit + PR.md (PR open if you stretched) |
+| 0–22 | Share-back, the loop, and the walkthrough of Steps 1–4 |
+| ~22–50 | **Work block 1 — Steps 1–4:** spec + contract → skill → stories on the board, repo + branch → plan read, approved, and the build flowing (most of you land on green inside this block) |
+| 50–62 | Reconvene: validate, the change request, docs, shipping |
+| ~62–92 | **Work block 2 — Steps 5–8:** validation evidence → the change (log-vs-log diff, ticket comment) → ARCHITECTURE.md read → commit approved + pushed, PR.md |
+| 92–105 | The conversation (how did that actually feel?) |
+| 105–110 | Homework 3 |
+
+**Pace markers inside the blocks:** block 1 — spec by ~32, skill by ~40, board +
+branch by ~45, plan approved by ~50. Block 2 — validated by ~72, change landed by
+~82, docs read by ~88, shipped by ~92.
 
 **If you fall behind:** the slice that matters is *green, validated, committed*.
 The change beat and docs can compress; anything unfinished is Session 5's warm-up

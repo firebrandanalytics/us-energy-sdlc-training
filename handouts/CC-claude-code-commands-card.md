@@ -30,6 +30,7 @@ Type these at the Claude Code prompt (the `>` line).
 | Command | What it does |
 |---------|-------------|
 | `/help` | List available slash commands |
+| `/btw <question>` | Ask a quick **side question — even while Claude is mid-task**. The answer appears in a dismissible overlay (`Esc` closes) and never enters the conversation, so it can't derail the work. It sees the whole session but can't run tools: perfect for *"what are you doing right now?"* or *"what does that term mean?"* while a build runs. |
 | `/plan` | Ask Claude to write a plan for what it's about to do, and pause for your approval before executing anything |
 | `/compact` | Summarise and compress the conversation context. Use before context fills up and quality degrades. Does NOT start a new conversation — history is summarised, not cleared. |
 | `/clear` | Clear the conversation entirely and start fresh. Use when you are done with a task and starting something unrelated, or when the context has drifted far from the current task. |
