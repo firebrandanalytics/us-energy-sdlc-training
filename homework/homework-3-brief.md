@@ -172,23 +172,23 @@ report.
 
 ---
 
-## Pre-work for Session 5 — Azure DevOps from the CLI (5 minutes, do not skip)
+## Pre-work for Session 5 — only if DevOps fought you in class
 
-Session 5 closes the loop on a **real Azure DevOps board**: your stories become
-work items, your Session 4 branch becomes a pull request, an agent reviews it,
-and the ticket gets closed. So that we don't spend session time on first-time
-auth, confirm the plumbing now:
+You used Azure DevOps from the agent in Session 4 (work items, the ticket
+comment, the repo push). Session 5 finishes the loop there — the clean-context
+review of your PR, the merge, the tickets closing — so if **any** of that
+errored for you in class, fix it before Tuesday:
 
 ```bash
 az extension add --name azure-devops     # the DevOps plugin for the az CLI (once)
 az login                                 # browser sign-in with your work account
-az devops configure --defaults organization=https://dev.azure.com/<your-org>
-az devops project list -o table          # if this prints projects, you're ready
+az devops configure --defaults organization=https://dev.azure.com/<your-org> project=<your-project>
+az boards work-item list --top 1 -o table   # any output (even "no items") = working
 ```
 
-If `az` isn't installed, grab it first (<https://aka.ms/installazurecli>). If the
-last command errors on permissions, just note the error and bring it — we'll sort
-access patterns (own repo vs. shared repo + your branch) at the top of Session 5.
+If it still errors on permissions, note the exact message and bring it — we
+triage access patterns (own repo vs. shared repo + your branch) at the top of
+Session 5. Nothing else in this homework depends on DevOps.
 
 ---
 

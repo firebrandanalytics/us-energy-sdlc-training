@@ -50,25 +50,30 @@ You'll also use, from elsewhere in the repo:
 
 ## What you'll do this session
 
-1. **Take the vague ask.** A realistic request — *"give me clean monthly volumes
-   by terminal"* — and see why, as written, it isn't buildable.
-2. **Sharpen it into a spec — including the output contract.** Pin the four things
-   that decide whether the numbers are right (**grain, filters/exclusions, units,
-   edge cases**) *and* the shape of one output row — the dashboard you build next
-   consumes exactly that shape, and your tests encode it.
-3. **Capture your Homework-2 knowledge as a skill.** A real `SKILL.md` (YAML
-   frontmatter + a page of verified rules) at `.claude/skills/` that the agent —
-   any agent, in any future session — loads automatically. Tribal knowledge,
-   made durable.
-4. **Slice the work into user stories** with acceptance criteria a test can check.
-   (In Session 5 these become Azure DevOps work items — one parallel agent each.)
-5. **Plan before building.** Hand everything to planning mode; the plan must put
-   the **tests first**. Review and approve before any code is written.
-6. **Red → green.** The agent writes `test_service.py` (failing), then builds
-   `service.py` until the tests pass — and proves it against the database and the
-   legacy numbers before claiming done.
-7. **Ship it.** A branch, agent-written commit messages that say *why*, and a PR
-   description with the test evidence — the input to Session 5's review-and-merge.
+1. **Take the vague ask** — *"give me clean monthly volumes by terminal"* — and
+   see why, as written, it isn't buildable.
+2. **Sharpen it into a spec — including the output contract** (grain,
+   filters/exclusions, units, edge cases, and the exact shape of one returned
+   row — which becomes your tests, and next week's dashboard input).
+3. **Capture your Homework-2 knowledge as a skill** — a real `SKILL.md` (YAML
+   frontmatter + a page of verified rules) the agent auto-loads in every future
+   session.
+4. **Put user stories on the real board.** The agent drafts them with checkable
+   acceptance criteria, then creates them as **Azure DevOps work items**.
+5. **Plan in plan mode — tests first, logging required — read the plan, approve,
+   and let it run.** The agent writes failing tests, builds the service, and
+   iterates to green at its own (fast) speed; your job is the reading and the
+   approvals.
+6. **Validate with evidence:** the green suite, the legacy reconcile, and the
+   service's own **run log cross-checked against the database**.
+7. **Absorb a change request, safely.** The desk asks for a new field
+   mid-session: comment the ticket, change the contract tests-first, and **prove
+   the existing numbers didn't move by diffing the before/after run logs**.
+8. **Document while it's true** — the agent writes `ARCHITECTURE.md` from the
+   real code; you read it like Monday's new teammate.
+9. **Ship it:** a DevOps repo, a branch, agent-written commit messages that say
+   *why*, and a PR description with the evidence — Session 5 reviews, merges,
+   and closes the tickets.
 
 ---
 

@@ -14,119 +14,103 @@ Today we stop doing *exercises* and run the **actual software development loop**
 end to end, with the agent doing the labor and you directing:
 
 ```
-vague ask → user stories → spec + contract → capture knowledge (a skill)
-        → tests FIRST → plan → build until green → validate (data + tests)
-        → commit + PR  →  [Session 5: review by a clean-context agent,
-                            merge, close the ticket, repeat in parallel]
+vague ask → spec + contract → capture knowledge (a skill) → stories ON THE BOARD
+        → plan (tests first) → approve, and let it build to green
+        → validate: tests + the run log + the database
+        → a change request lands → prove nothing broke (compare the logs)
+        → documentation → ship: repo, branch, commit, PR
+        → [Session 5: clean-context review, merge, close the tickets, in parallel]
 ```
 
-**Session 4** runs the loop from the vague ask through a committed, PR-ready
-service. **Session 5** finishes it the way real teams do: work items on an Azure
-DevOps board, parallel agents each taking a story, an *unbiased* agent reviewing
-each PR, merge, ticket closed. If we don't finish everything today, that's fine —
-it rolls into Session 5's opening. The loop is the lesson.
+**One heads-up about how today feels:** the agent will produce each artifact in a
+minute or two. The work — *your* work — is **reading**: the plan before you
+approve it, the tests before you trust them, the docs before you'd hand them to a
+teammate. The building is fast; the understanding is the job.
 
 > **Script vs. service — the one distinction the build turns on.** The legacy
-> `vol_report.py` *prints* a report and exits; its numbers are trapped inside a
-> `print()`. A service *returns* the numbers as data (`monthly_volumes("2025-08")`
-> hands back a list of rows). Same query underneath — but a service is something
-> you can call, test, and build a UI on.
+> `vol_report.py` *prints* a report and exits. A service *returns* the numbers as
+> data (`monthly_volumes("2025-08")` hands back rows) — something you can call,
+> test, and build a UI on. Ours will also **log** — every run leaves a file.
 
 ---
 
 ## Environment
 
 You will work in **`sessions/session-4/`** (this folder). From here, the committed
-database is at **`../../data/us_energy.sqlite`** — that two-levels-up path is the
-one to use everywhere in this lab.
+database is at **`../../data/us_energy.sqlite`**.
 
-### Set up
+### Set up (you did most of this in the pre-session email)
 
 ```bash
 cd sessions/session-4
 python3 -m venv venv
 source venv/bin/activate            # Windows Git Bash: source venv/Scripts/activate
-pip install pytest                  # required today — we write tests FIRST
+pip install pytest
 ```
 
-(No other packages — `sqlite3` ships with Python. FastAPI comes in Homework 3.
-If `python3` isn't found on your machine, use `py -3` or `python` — whichever
-worked for you in Homework 2 — consistently throughout.)
+(If `python3` isn't found, use `py -3` or `python` — whichever worked for you in
+Homework 2 — consistently throughout.)
 
-> **One ground rule for the whole session:** until your Session 4 commit exists,
-> **don't open or let the agent read anything under `sessions/session-5/`** —
-> that's next week's folder, and peeking at it skips the only part that
-> transfers.
+**Azure DevOps** (also from the pre-session email — takes one minute if done):
 
-### Confirm the database opens from here
+```bash
+az extension add --name azure-devops        # once
+az login                                    # browser sign-in
+az devops configure --defaults organization=https://dev.azure.com/<your-org> project=<your-project>
+az boards work-item list --top 1 -o table   # any output (even "no items") = you're in
+```
+
+> **If DevOps fights you** (permissions, tenant policy, anything): **don't burn
+> lab time on it.** Note the exact error and keep going — every DevOps step below
+> has a 30-second local fallback, and we sort access before Session 5.
+
+### Confirm the database and the legacy script
 
 ```bash
 python3 -c "import sqlite3; print(sqlite3.connect('../../data/us_energy.sqlite').execute('SELECT COUNT(*) FROM lifts').fetchone())"
 # -> (50025,)
+( cd ../../data && python3 vol_report.py 2025-08 )    # created in HW2; listing is in homework/homework-2-brief.md if missing
 ```
 
-### See what you're replacing
+**Keep that legacy output on screen** — it is your reconciliation anchor all
+session, and you'll check the agent's tests against it.
 
-> You created `data/vol_report.py` during Homework #2. If you skipped HW2, grab the
-> listing from `homework/homework-2-brief.md` and save it to `data/vol_report.py`
-> before running the command below.
-
-```bash
-# The legacy script hard-codes its DB name, so run it from inside data/:
-( cd ../../data && python3 vol_report.py 2025-08 )
-```
-
-Keep that output handy — it's your reconciliation target, and your tests will
-encode it.
+> **One ground rule for the whole session:** until your Session 4 commit exists,
+> **don't open or let the agent read anything under `sessions/session-5/`** —
+> that's next week's folder, and peeking at it skips the only part that transfers.
 
 ---
 
-## Step 1 — Sharpen the vague ask into a spec (20 min)
+## Step 1 — Sharpen the vague ask into a spec (18 min)
 
 ### The ask
-
-This is what lands in your queue:
 
 > "Hey — can you get me clean monthly volumes by terminal? The old
 > `vol_report.py` sort of does it but I don't trust the numbers and nobody
 > remembers how it works. I just want something I can pull each month and hand to
 > the desk. Should be quick — the data's all there."
 
-That's the entire ask. It sounds clear. It is not buildable. *Clean* how?
-*Monthly* by which timestamp? *Volume* in which gallons — as-metered or
-temperature-corrected? Does a voided ticket count? A non-physical book adjustment?
-Tax-exempt dyed diesel? Every one of those is a decision that **changes the
-number**, and if you don't make it, the agent will — silently, from a
-training-data default — and hand you a confident, wrong answer that runs.
+It sounds clear. It is not buildable. *Clean* how? Which gallons? Does a voided
+ticket count? A book adjustment? Tax-exempt dyed diesel? Every one of those is a
+decision that **changes the number** — and what you don't decide, the agent
+decides for you.
 
-### Interrogate it first (~5 min)
+### Interrogate, then write
 
-Open Claude Code in this folder. Have it surface the decisions before you write
-anything:
+Open Claude Code in this folder and have it surface the decisions first:
 
 ```
 Read ../../data/vol_report.py, ../../data/DATA-DICTIONARY.md, and the schema of
 ../../data/us_energy.sqlite (run: .schema lifts). I have a vague request: "clean
 monthly volumes by terminal." Before I write any spec or code, list every
-decision this ask leaves implicit — the questions an engineer would have to
-answer before the numbers are well-defined. Group them: grain, filters/
-exclusions, units, edge cases. Do not propose a design yet.
+decision this ask leaves implicit, grouped: grain, filters/exclusions, units,
+edge cases. Do not propose a design yet.
 ```
 
-Read its list. Add your own. Your Homework 2 dossier already holds most of the
-answers — that's why we did it.
-
-### Write the spec — and the output contract (~15 min)
-
-Open **`handouts/D4-data-spec-template.md`** and fill it in. D4 forces the four
-things that decide whether the numbers are right — **grain, filters/exclusions,
-units, edge cases** — into the open. Use **C7** for the surrounding sections.
-(D4 ends with a worked example — **draft your own answers from your dossier
-first**, then compare. Copying the example skips the decision-making, which is
-the exercise.)
-
-Then add the section a one-off script wouldn't need but a *service* must have —
-the **output contract** (the shape of one returned row; **D5** is the card):
+Your Homework 2 dossier holds most of the answers — that's why we did it. Then
+fill in **`handouts/D4-data-spec-template.md`** (draft your own answers from your
+dossier **before** peeking at D4's worked example), and add the **output
+contract** (**D5** is the card):
 
 ```
 One output row =
@@ -141,226 +125,170 @@ Invariants the caller can rely on:
 ```
 
 > **The discipline:** if you can't fill in **Grain** and **Filters / Exclusions**
-> precisely, the ask is still vague. And if you can't say what one returned row
-> looks like, you can't build the app on it — or write a test for it. The
-> contract becomes your tests in Step 5, almost word for word.
+> precisely, the ask is still vague. The contract becomes your tests, almost word
+> for word — and next week the dashboard reads exactly that shape.
 
 ---
 
-## Step 2 — Capture what you know as a *skill* (13 min)
+## Step 2 — Capture what you know as a *skill* (10 min)
 
-Your HW2 dossier decoded the codes, caught the lying comments, and found the bad
-constant. Right now that knowledge lives in a document only *you* will read. Turn
-it into a **skill** — a file the agent itself loads — and every future session
-(yours, a teammate's, and the parallel agents in Session 5) starts already knowing
-the rules.
+Your HW2 dossier lives in a doc only *you* will read. Turn it into a **skill** —
+a file the agent itself loads — and every future session (yours, and the parallel
+agents in Session 5) starts already knowing the rules.
 
-A skill is a folder with a `SKILL.md` file: **YAML frontmatter** (a `name` and a
-one-line `description` that tells the agent *when to use it*), then the knowledge
-as plain markdown. Claude Code auto-discovers skills in your repo's
-`.claude/skills/` folder.
-
-**Prompt Claude Code:**
+A skill is a folder with a `SKILL.md`: **YAML frontmatter** (`name`, plus a
+one-line `description` saying *when to use it*), then the knowledge as markdown.
+Claude Code auto-discovers them in `.claude/skills/`.
 
 ```
 Create a skill at .claude/skills/us-energy-volume-rules/SKILL.md capturing the
-verified rules of this dataset from my Homework 2 dossier, which I'll paste below.
-Format: YAML frontmatter with `name: us-energy-volume-rules` and a one-line
-`description` saying when to use it (computing, reviewing, or testing volume
-numbers from the lifts table). Body: the meaning of each magic code and how each
-measure treats it; which gallon column and why; the physical-vs-taxable
-asymmetry; the RIN correction (what's wrong in the legacy script and where the
-right values live); the reconciliation anchor numbers; and the query-hygiene
-rules (sargable month filter, named constants). Keep it under a page — it's an
-operating card for an agent, not an essay.
+verified rules of this dataset from my Homework 2 dossier, pasted below. Format:
+YAML frontmatter with name: us-energy-volume-rules and a one-line description
+saying when to use it (computing, reviewing, or testing volume numbers from the
+lifts table). Body, one page max: each magic code's meaning and which measures
+exclude it; which gallon column and why; the physical-vs-taxable asymmetry; the
+RIN correction (what's stale in the legacy script and where the right values
+live); the reconciliation anchors; query hygiene (sargable month range, named
+constants).
 
 MY DOSSIER:
-<paste the relevant parts of your HW2 dossier>
+<paste the relevant parts>
 ```
 
-**Review it like a PR.** The two failure modes: it parrots a *comment* instead of
-the verified behavior (your dossier is the truth — check against it), and it's too
-long (an agent skims; a page beats five). One thing to add if the agent doesn't:
-`mode = 8`'s meaning wasn't derivable from the data — Session 3's open question.
-**Treat it as confirmed now** (the feed owner says: book adjustment, non-physical)
-and record it that way — *flag the unknown, get it confirmed by a human, then
-write down the confirmed fact*. That's the normal arc for tribal knowledge.
+**Review it like a PR** — does it carry the *verified* rules (your dossier), not
+the comments' claims? Add the line the agent may miss: `mode = 8`'s meaning is
+**confirmed with the feed owner** (S3's open question, now settled — flag the
+unknown, get it confirmed, write down the fact).
 
-**Prove it loads — with specifics, not vibes.** Start a fresh Claude Code session
-at the repo root and ask:
+**Prove it loads — with specifics, not vibes.** Fresh Claude Code session at the
+repo root:
 
 > Read only `.claude/skills/us-energy-volume-rules/SKILL.md`. Summarize the
 > monthly volume rules from that skill — including the exact status / mode /
 > prod_cd codes and which measures exclude each. If you can't name all three
 > codes and their scope, say the skill didn't load.
 
-The bar: it names **status 8 and mode 8 (excluded from every measure)** and
-**prod_cd 6 (excluded from taxable only)** — facts that live in your skill's
-*body*, not its description, so a generic answer can't fake it. That fresh-session
-test is exactly why this matters: **in Session 5, agents that have never seen your
-dossier will build on these rules.**
-
-> If your HW2 dossier is thin, run the extraction first and feed *that* to the
-> skill prompt: *"Read ../../data/vol_report.py. Treat the code's behavior as
-> truth and the comments as suspect. For each output it computes, give me the real
-> rules — filters, gallon column, constants — verified against
-> ../../data/us_energy.sqlite, flagging every place a comment lies."*
+The bar: **status 8 and mode 8 (every measure), prod_cd 6 (taxable only)** —
+body-only facts a generic answer can't fake.
 
 ---
 
-## Step 3 — User stories (7 min)
+## Step 3 — Stories, onto the board (10 min)
 
 A spec says what *right* means; **stories** slice it into shippable, checkable
-pieces of *work*. In Session 5 these become Azure DevOps work items — one parallel
-agent per story. Today the agent drafts them and you edit.
+work — and today they go on the **real Azure DevOps board**, because that's
+where work lives at U.S. Energy.
 
-**Prompt Claude Code:**
+**First, draft them:**
 
 ```
-From the spec below, draft user stories as stories.md in this folder. Slice them
-so each is independently shippable and testable: (1) the volumes service
-(monthly_volumes + months, honoring the output contract), (2) a thin reconcile
-CLI that calls the service, (3) [stretch] a corrected RIN measure from the
-rin_transactions ledger, and (4) one story per Session-5 dashboard extension
-(month filter, chart, terminal detail, JSON API) — short, we build those next
-week. Each story: "As <who> I want <what> so that <why>" plus 3-5 acceptance
-criteria that are CHECKABLE — a test that can pass or a query that can prove it,
-not vibes. The service story's criteria must include: returns (not prints),
-reconciles to vol_report.py 2025-08 to the gallon, the invariants hold, and unit
-tests written before the implementation pass.
+From the spec below, draft user stories as stories.md in this folder: (1) the
+volumes service (monthly_volumes + months honoring the output contract, with
+per-run file logging), (2) a thin reconcile CLI that calls the service, (3)
+[stretch] a corrected RIN measure from the rin_transactions ledger, and (4) one
+short story per Session-5 dashboard extension (month filter, chart, terminal
+detail, JSON API). Each story: "As <who> I want <what> so that <why>" plus 3-5
+acceptance criteria that are CHECKABLE — a test that can pass or a query that can
+prove it, not vibes.
 
 THE SPEC:
 <paste your spec>
 ```
 
-**Edit pass (2 min):** delete any acceptance criterion you couldn't check
-mechanically. "Works correctly" is not a criterion; "DAL 2025-08 physical =
-1,517,103" is.
+**Edit pass:** delete any criterion you couldn't check mechanically. *"Works
+correctly"* is not a criterion; *"DAL 2025-08 physical = 1,517,103"* is.
 
-> **Already have Azure DevOps handy?** (USV folks: you live there.) A stretch for
-> later — these stories become work items with
-> `az boards work-item create --type "User Story" --title "..."`. We do it
-> properly, board and all, in Session 5; `stories.md` is today's deliverable.
+**Then put them on the board** — the agent drives:
+
+```
+For each story in stories.md, create an Azure DevOps work item:
+az boards work-item create --type "User Story" --title "<story title>"
+--description "<the story + its acceptance criteria>". (If the project's process
+doesn't have "User Story", use --type Issue.) Then list the created IDs and put
+each ID back into stories.md next to its story.
+```
+
+Note your **service story's work-item ID** — a change request is going to land on
+it later, and Session 5 closes it.
+
+> **Fallback (no DevOps yet):** `stories.md` *is* the artifact — IDs get created
+> in Session 5 instead, nothing else changes. Keep moving.
 
 ---
 
-## Step 4 — Plan before building (10 min)
+## Step 4 — Plan it, read the plan, approve — and let it run (12 min + the build)
 
-Switch Claude Code into planning mode so it can't start editing:
-
-```bash
-claude --permission-mode plan
-```
-
-(Or open normally and `Shift+Tab` into plan mode.)
-
-Hand it everything — and require a **tests-first** sequence:
+Switch into planning mode (`claude --permission-mode plan`, or `Shift+Tab`).
+Plan mode means the agent **can read everything and touch nothing** — so think it
+through with it, freely:
 
 ```
-I'm building story 1 from stories.md: a clean volumes service in this folder — a
-SERVICE, not a script: it must RETURN data (a web app calls it next week), not
-print it. You have the spec, the stories, and the skill (load
-us-energy-volume-rules). Plan the implementation. The plan must:
+Plan story 1 from stories.md: a clean volumes service in this folder — a SERVICE,
+not a script (it RETURNS data; a web app calls it next week). Load the
+us-energy-volume-rules skill. The plan must include:
 
-1. Sequence TESTS FIRST: test_service.py is written and failing BEFORE service.py
-   exists. Tests must encode the output contract (field names and types), the
-   invariants (physical >= taxable >= 0; one row per terminal-month), and the
-   reconciliation anchor (the exact 2025-08 numbers from vol_report.py).
-2. Name the functions — at least monthly_volumes(month) and months() — and
-   exactly what each RETURNS (a list of dicts in the contract shape).
-3. Give the exact SQL for physical and taxable, naming every filter and the
-   gallon column — and bound the month with a RANGE on lift_ts (sargable), never
-   substr()/strftime() wrapped around the column.
-4. Include a thin CLI entry point that CALLS the service (a consumer, not the
-   service) so I can reconcile from the terminal.
-5. End with the validation gate: what you will run (pytest, the reconcile, which
-   DB checks) before declaring it done.
-
-Do not write any code yet. Wait for my approval.
+1. TESTS FIRST: test_service.py exists and runs (failing) before service.py.
+   The tests encode the output contract (field names and types), the invariants
+   (physical >= taxable >= 0; one row per terminal-month), and the exact 2025-08
+   reconciliation anchors — take them from the printed output of
+   "cd ../../data && python3 vol_report.py 2025-08", not from memory.
+2. The functions — monthly_volumes(month) and months() — and exactly what each
+   RETURNS (list of dicts in the contract shape).
+3. The exact SQL for physical and taxable: every filter named, the gallon column
+   named, the month bounded by a RANGE on lift_ts (never substr/strftime around
+   the column).
+4. LOGGING: every run writes a separate log file (logs/run-<timestamp>.log) with
+   one deterministic, diffable line per output row — not just stdout. Two runs
+   must be comparable with a diff.
+5. A thin CLI that CALLS the service (a consumer, not the service) and writes
+   that run log.
+6. The validation gate you'll finish with: the full pytest run, a side-by-side
+   reconcile against vol_report.py, and a cross-check of the run log against the
+   database itself.
 ```
 
-**Read the plan. Push back.** Be especially picky about:
+**Now the first real reading beat of the day. Read the plan like a reviewer:**
 
-- **Tests before code.** If the plan writes `service.py` first "to know what to
-  test," that's backwards — the contract and the legacy numbers already define the
-  tests. Send it back.
-- **Return, don't print.** If `monthly_volumes()` prints a table, it's a script in
-  disguise.
-- **The exclusions.** Physical keeps dyed diesel; taxable drops it. One filter set
-  for "the volume" is *the* classic miss.
-- **net vs gross.** The plan should name `net_gal` and say why.
-- **The month boundary.** A half-open range (`lift_ts >= '2025-08-01' AND
-  lift_ts < '2025-09-01'`). A function wrapped around the column defeats any index
-  — Session 3's lesson.
+- Tests before code? With the **real** anchor numbers (cross-check 2–3 against
+  the legacy output on your screen — agents *invent* plausible numbers; also use
+  the integers the script **prints**, not SQLite `ROUND()` re-computations, which
+  land a gallon off on some terminals)?
+- Functions **return**? Physical keeps dyed diesel while taxable drops it?
+  `net_gal` named, with the why? Month a **range**?
+- The **log design** there — one file per run, diffable lines?
 
-Approve only when the plan is concrete enough that you'd trust the build.
+**Then approve — and let it go.** When the plan completes, Claude Code asks
+whether to proceed: **say yes and watch.** It will write the failing tests, then
+the service, run pytest, and iterate to green, asking for approval as it goes.
+This is the loop running at its natural speed — your job is the approvals
+(**Ctrl+E** anything you're unsure of) and watching for one thing: if it starts
+writing `service.py` *before* the failing test run exists, stop it and point at
+the plan.
+
+**When it lands on green: read the tests** (5 quiet minutes). They are your spec,
+executable — the contract fields, the invariants, the anchors. If a test asserts
+something your spec didn't say, one of them is wrong. Fix that now.
 
 ---
 
-## Step 5 — Tests first, then build until green (35 min)
+## Step 5 — Validate: the tests, the log, and the database (8 min)
 
-### 5a. Red: write the tests (~10 min)
-
-> **STOP — get the real anchors first.** Run
-> `( cd ../../data && python3 vol_report.py 2025-08 )` **now** and keep that exact
-> output in front of you. The test prompt below has the agent copy those values
-> in — if you skip the run, the agent will *invent* plausible numbers, and every
-> step after that converges on a confidently wrong answer. (And use the integers
-> the script **prints** — don't recompute anchors with SQLite's `ROUND()`, which
-> rounds differently and lands one gallon off on some terminals.)
-
-Exit plan mode and have it write **only** the tests:
+Green tests are necessary, not sufficient. Make the agent prove the run against
+the **real artifacts**:
 
 ```
-Write test_service.py per the approved plan — BEFORE service.py exists. Encode:
-the contract (monthly_volumes('2025-08') returns a non-empty list of dicts with
-exactly the fields terminal, month, physical_gal, taxable_gal; gallons are ints);
-the reconciliation anchor (assert the exact top numbers from
-"cd ../../data && python3 vol_report.py 2025-08" — run it and copy the real
-values in); the invariants (physical >= taxable >= 0 on every row; no duplicate
-(terminal, month)); and months() returning sorted "YYYY-MM" strings. Then run
-pytest and show me the output — every test should FAIL with an import error,
-because service.py doesn't exist yet. That's correct.
+Run the CLI for 2025-08 so it writes a run log. Then validate, showing evidence
+for each: (1) the full pytest output; (2) vol_report.py 2025-08 and your CLI
+side by side — physical and taxable match to the gallon; (3) cross-check the run
+log against the DATABASE: re-derive at least three terminals' physical and
+taxable with direct SQL and show they equal the log's lines, and confirm the
+log's row count matches a COUNT of qualifying (terminal, month) groups. Report
+the evidence, then say done or not done.
 ```
 
-**Read the tests before you bless them** — they are the spec, executable. Is the
-anchor the *real* legacy number? Do the invariants match your contract? A wrong
-test is worse than no test: the build will faithfully converge on the wrong
-answer.
-
-### 5b. Green: build the service (~20 min)
-
-```
-Now implement service.py per the plan. Requirements: monthly_volumes(month=None)
-and months() RETURN data honoring the contract; named constants for the magic
-values (no bare 6 / 8 in the SQL); a sargable month range; a thin
-__main__ CLI that calls the service. Work in this folder only — do NOT read or
-copy from sessions/session-5/ (next week's folder). After each change run pytest;
-you're done only when every test passes. Then show me the green run and the
-2025-08 CLI output.
-```
-
-Approve actions as they come up — **`Ctrl+E` on anything you're not sure about**
-(Session 2 muscle). The loop you want to see: *test → fail → fix → re-run* until
-green. If the agent declares success without showing a green pytest run, that's
-the catch: *"show me the test output."*
-
-### 5c. The done-gate: validate against the data (~5 min)
-
-Green tests are necessary, not sufficient — make the agent prove it against the
-**database and the legacy output**, not just its own tests:
-
-```
-Before we call this done, validate it: (1) run the full pytest suite and show the
-output; (2) run "cd ../../data && python3 vol_report.py 2025-08" and your CLI
-side by side and confirm physical + taxable match to the gallon for the top
-terminals; (3) run one direct DB check of your choice that could catch a wrong
-filter (e.g. a COUNT of excluded rows) and explain what it proves. Report the
-evidence, then say done or not done.
-```
-
-That habit — **the agent shows evidence from the real artifacts before claiming
-done** — is the single most transferable thing in this lab.
+That habit — **the agent proves "done" from the tests, the log, and the database
+before it's allowed to say the word** — is the single most transferable thing in
+this course.
 
 ```bash
 # the 30-second proof it's a service, not a script:
@@ -368,105 +296,182 @@ python3 -c "import service; rows = service.monthly_volumes('2025-08'); print(row
 # -> {'terminal': 'DAL', 'month': '2025-08', 'physical_gal': 1517103, 'taxable_gal': 1371642}
 ```
 
-### When it doesn't match
-
-That's normal and it's the work. Read the disagreement with Claude Code:
-
-- **Physical off:** usually a missing exclusion (`status = 8` or `mode = 8`), or
-  `gross_gal` instead of `net_gal` (~1–1.5% high and *looks* fine).
-- **Taxable off:** the dyed-diesel asymmetry — dropped from both measures, or
-  neither.
-- **Off by exactly one gallon on a terminal or two:** a rounding-method mismatch —
-  SQLite's `ROUND()` rounds half away from zero; the legacy script accumulates
-  floats and rounds in Python. Sum raw in SQL, round in Python, and compare to the
-  numbers the legacy script *prints*.
-- **Slow query:** `EXPLAIN QUERY PLAN`; if it shows `SCAN lifts`, the month filter
-  is probably wrapped in a function — rewrite to the range, and use an index on
-  the timestamp in *your* copy: `CREATE INDEX idx_lifts_ts ON lifts(lift_ts);`
-  (you likely created exactly this one in Session 3's lab — it's still there) →
-  the plan should flip to `SEARCH lifts USING INDEX idx_lifts_ts`.
-
-### Stretch (only if you're green and reconciled)
-
-- **The corrected RIN measure** (story 3): the legacy script multiplies renewable
-  gallons by a flat constant — your HW2 dossier knows why that's wrong and where
-  the real per-product values live (`rin_transactions`). Build the measure from
-  the **ledger**. Your number **should not match** the legacy print — expect
-  roughly 2% higher — and your story's acceptance criterion is documenting *why
-  yours is right*. (We compare exact numbers in the wrap.)
-- **Taste the app a day early:** a five-line script that imports your service and
-  prints an HTML `<table>` of one month — proof the service is consumable by a UI,
-  which is exactly what Homework 3 turns into a real page.
+**If something doesn't match:** missing exclusion (`status = 8` / `mode = 8`),
+`gross_gal` instead of `net_gal` (~1–1.5% high, *looks* fine), the dyed-diesel
+asymmetry applied to both measures or neither — or, if you're off by exactly one
+gallon somewhere, a rounding-method mismatch (sum raw in SQL, round in Python,
+compare to what the legacy script *prints*).
 
 ---
 
-## Step 6 — Ship it: commit + PR (10 min)
+## Step 6 — A change request lands (12 min)
 
-Real work ends in a reviewable unit, not a folder of files. The agent writes the
-commit and the PR description; you review both like everything else.
+It always does. The desk replies:
+
+> *"This is great — can I also get how many tickets each number came from? Just a
+> count per terminal."*
+
+**First, log it where work lives — on the ticket:**
 
 ```
-Stage and commit today's work in this repo on a new branch s4/<your-initials>:
-the spec, stories.md, the skill, test_service.py, and service.py. Write the
-commit message(s) yourself: a one-line subject in imperative mood naming the
-story it implements, and a body that says WHY (the decisions: net_gal, the
-exclusions, the asymmetry) and the EVIDENCE (tests green; reconciles to legacy
-2025-08 to the gallon). Don't push — there's no remote for this yet. Then draft
-PR.md in this folder: the pull-request description for this change — title,
-summary of decisions, test evidence, and which story it closes.
+Add a comment to my service story's work item:
+az boards work-item update --id <your-story-id> --discussion "Change request
+from the desk: add lift_count (qualifying tickets per terminal-month) to the
+output contract. Implementing tests-first; will verify existing numbers
+unchanged by comparing run logs."
 ```
 
-Read the commit message the way a reviewer six months from now will. Does it say
-*why*, or just *what*? Does the PR description give a reviewer everything needed
-to judge it — including the test evidence?
+*(No DevOps? Note it at the top of stories.md and keep going.)*
 
-> **Where this goes:** in Session 5 this branch becomes a real **Azure DevOps pull
-> request** — pushed to a repo, reviewed by a **clean-context agent** (one that
-> didn't write the code and has no stake in liking it), merged, and the work item
-> **closed**. Today's commit is the input to that pipeline. If you already have
-> `az devops` set up and time to spare: `az repos pr create` is the move — but
-> don't burn lab time on auth; Session 5 starts there.
+**Then make the change — contract first, tests first:**
+
+```
+Change request: add lift_count (int — the number of qualifying tickets behind
+each row's totals) to every returned row. This is a CONTRACT change, so do it
+tests-first: update the contract test deliberately (the exact-fields assertion
+must now include lift_count) and add one anchor for it, then implement, then run
+to green. Then run the CLI again and COMPARE the new run log with the previous
+run's log: show me that every existing physical and taxable value is identical
+line by line, and that only lift_count is new. Report exactly what you compared.
+```
+
+Two things to notice while it works:
+
+- **The contract test fails first.** That's the contract doing its job — you
+  can't drift the row shape by accident; extending it is a *deliberate, visible*
+  act. (Next week, anything consuming your service inherits this protection.)
+- **The log comparison is the verification.** The new column is obvious; whether
+  any of the 25 existing numbers moved is **not** eyeball-able. Two run logs and
+  a diff settle it in one command. That's why services log.
+
+**Checkpoint:** tests green again, the before/after log diff shows existing
+numbers byte-identical, and the ticket carries the comment trail.
+
+---
+
+## Step 7 — Documentation, while it's true (8 min)
+
+Docs written months later describe what someone *remembers*. Yours get written
+now, by the agent, from the actual artifacts — and your job is to **read them**.
+
+```
+Write ARCHITECTURE.md for this folder, one page: the pieces and the data flow
+(database -> service -> consumers: the CLI, the tests, next week's dashboard);
+the output contract and where it's enforced (the tests); the run-log design and
+what it's for; every load-bearing decision and its WHY (net_gal, the two
+exclusions, the dyed-diesel asymmetry, lift_count, the rounding approach, the
+sargable month range); and a short "what not to break" list for the next
+engineer. Write it from the code and tests as they exist — not from intentions.
+```
+
+**Read it end to end** with one question: *would a new teammate, starting Monday,
+get it?* If a decision's "why" is missing or wrong, have the agent fix it — wrong
+docs are worse than none.
+
+**Stretch — API-doc the code itself:** have the agent ensure every public
+function has a real docstring (args, returns, the contract), then generate
+HTML docs the way Python does it natively:
+
+```bash
+python3 -m pydoc -w service        # writes service.html — open it in a browser
+```
+
+*(Session 5 adds the other half: API documentation for the web endpoints.)*
+
+---
+
+## Step 8 — Ship it: repo, branch, commit, PR (8 min)
+
+Real work ends in a reviewable unit. Today it gets a real home:
+
+```
+Ship today's work:
+1. Create a repo for me in Azure DevOps: az repos create --name <initials>-volume-service.
+2. In this course repo, create branch s4/<initials>; stage and commit today's
+   artifacts (the spec, stories.md, the skill, test_service.py, service.py,
+   ARCHITECTURE.md — not venv/ or logs/). Write the commit message yourself:
+   imperative subject naming the story; a body with the WHY (the decisions) and
+   the EVIDENCE (tests green; reconciles 2025-08 to the gallon; change verified
+   by log comparison).
+3. Add the new repo as a remote and push main and the branch there.
+4. Draft PR.md: the pull-request description — title, summary of decisions, test
+   evidence, the work items it touches.
+```
+
+**Read the commit message** the way a reviewer six months out will: does it say
+*why*, or just *what*?
+
+**Stretch (DevOps working + time to spare):** open the real PR now and leave it
+open — `az repos pr create --source-branch s4/<initials> --target-branch main
+--title "..." --description "$(cat PR.md)" --work-items <id>`. **Don't complete
+it.** Session 5 starts with a clean-context agent reviewing it, then the merge,
+then the ticket close.
+
+> **Fallback (no DevOps):** the local branch + commit + PR.md is the complete
+> deliverable; the push and PR happen at the top of Session 5.
+
+---
+
+## Sidebar — while the agent works: make it explain (optional, any time)
+
+Any moment you're waiting — or anything in the generated code you wouldn't want
+to defend in review — turn the agent into the explainer (the Session 3 grounded
+move, now on *your* code):
+
+> Walk me through service.py top to bottom — what each function does and why
+> it's shaped that way. Point at the lines as you go.
+
+Not fluent in Python? Two prompts that work:
+
+> Explain the Python features this file uses that a newcomer would stumble on —
+> the dict comprehension, the context manager, f-strings, `if __name__ ==
+> "__main__"` — each with the line it appears on.
+
+> I know C# (or Java / SQL / JavaScript — yours). Explain this file by analogy:
+> for each construct, show the equivalent I'd write in my language and what's
+> different here.
+
+Understanding the code you ship is not optional just because you didn't type it.
 
 ---
 
 ## Pacing (elapsed from the start of the session)
 
-The first ~13 minutes are the HW2 share-back and the framing — the lab starts
-after that.
+The first ~12 minutes are the HW2 share-back and the loop framing — the lab
+starts after that.
 
 | Elapsed | Where you should be |
 |---:|---|
-| 33 min | Spec drafted — sharp on grain, units, exclusions, and the contract |
-| 46 min | Skill written, reviewed, and loading in a fresh session |
-| 53 min | stories.md drafted with checkable acceptance criteria |
-| 63 min | Plan approved (tests-first sequence) |
-| 73 min | Tests written and **failing** (red) |
-| 98 min | Tests **green**; physical + taxable reconcile; done-gate evidence shown |
-| 108 min | Committed on `s4/<initials>` with a real message; PR.md drafted |
+| 30 | Spec + contract drafted |
+| 40 | Skill written, reviewed, loading in a fresh session |
+| 50 | Stories drafted **and on the board** (IDs noted) |
+| 62 | Plan **read** and approved; the build is running |
+| 72 | Green; **tests read**; service proven to return rows |
+| 80 | Validation evidence shown: pytest + reconcile + **log ↔ database** |
+| 92 | Change landed: contract test updated, green again, **log-vs-log diff** clean, ticket commented |
+| 100 | ARCHITECTURE.md generated and **read** |
+| 108 | Shipped: repo + branch + commit + PR.md (PR open if you stretched) |
 
-**If you fall behind:** a green, reconciled service with its tests and a real
-commit is a complete slice — the skill and stories can be finished async, and
-anything unfinished is Session 5's warm-up. If you only get to *red* tests today,
-even that is a win: the build-to-green is a clean place to resume.
+**If you fall behind:** the slice that matters is *green, validated, committed*.
+The change beat and docs can compress; anything unfinished is Session 5's warm-up
+— by design.
 
 ---
 
 ## What you'll take from this
 
-The loop you just ran is the real workflow, whatever the deliverable:
-
 1. **Sharpen** the ask into a spec with a contract — before any code.
-2. **Capture** the tribal knowledge as a skill the *agent* can load — not a doc
-   only humans read.
-3. **Slice** it into stories with checkable acceptance criteria.
-4. **Plan** with everything in context; tests sequenced first; review before
-   building.
-5. **Red → green**: the agent builds until *your* tests pass, then **proves it
-   against the data** before claiming done.
-6. **Ship** a reviewable unit: a branch, a commit that says why, a PR description
-   with evidence.
+2. **Capture** the tribal knowledge as a skill the *agent* loads.
+3. **Slice** into stories with checkable criteria — on the board, where work lives.
+4. **Plan** with tests first; **read the plan**; then let the loop run at its
+   own speed.
+5. **Validate with evidence**: the tests, the run log, the database — the agent
+   proves "done."
+6. **Absorb a change** the safe way: contract-first, then *prove* nothing else
+   moved by comparing run logs.
+7. **Document while it's true**, and **ship a reviewable unit**.
 
-Session 5 closes the loop: the board, the parallel agents (each loading your
-skill, each building against your contract), the unbiased review, the merge, the
-closed ticket. **Homework 3** keeps you moving — the dashboard skeleton on your
-service.
+Session 5 closes the loop: the clean-context review of your open PR, the merge,
+the ticket moving to Closed — and the parallel agents building the dashboard
+stories against your contract, loading your skill. **Homework 3** keeps you
+moving: the dashboard skeleton on your service.
