@@ -136,14 +136,19 @@ exclusions (per measure), units, edge cases — plus an OUTPUT CONTRACT section:
 the exact shape of one returned row (terminal str, month "YYYY-MM",
 physical_gal int, taxable_gal int) and the invariants a caller can rely on
 (physical_gal >= taxable_gal >= 0; exactly one row per terminal-month). Take
-every decision from my dossier; FLAG anything my dossier doesn't settle rather
-than deciding it yourself.
+every decision from my dossier — but VERIFY each one against the database as
+you go: where my dossier disagrees with the data, flag the disagreement instead
+of copying it, and FLAG anything my dossier doesn't settle rather than deciding
+it yourself.
 ```
 
 **Your read (2 minutes, four checks):** `net_gal` with the why · the two
 exclusions on *both* measures · dyed diesel **kept in physical, dropped from
 taxable** · the contract row shape (it becomes your tests, almost word for word).
-Fix anything off; don't polish. Move.
+
+If a check fails, **your dossier was wrong there** — that's fine and it's why we
+verify: the share-back just gave you the right answers, so fix the spec now and
+move. (Dossiers vary; the data doesn't.) Don't polish. Move.
 
 ---
 
@@ -166,7 +171,8 @@ lifts table). Body, one page max: each magic code's meaning and which measures
 exclude it; which gallon column and why; the physical-vs-taxable asymmetry; the
 RIN correction (what's stale in the legacy script and where the right values
 live); the reconciliation anchors; query hygiene (sargable month range, named
-constants).
+constants). Verify every rule against the database before writing it down — the
+skill must carry what the DATA says, not what my dossier or any comment claims.
 
 MY DOSSIER:
 <paste the relevant parts>
