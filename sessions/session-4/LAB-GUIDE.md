@@ -69,9 +69,11 @@ ls
 az repos create --name <initials>-volume-service --query "remoteUrl" -o tsv
 git clone <the URL it printed>            # "cloned an empty repository" = correct
 cd <initials>-volume-service
+git branch -M main                        # guard: some gits default to "master" — we use main
 
 # 3) pytest (the one package today — install it once, no venv needed):
 python3 -m pip install pytest
+#    (if pip says "externally-managed-environment", add: --user --break-system-packages)
 
 # 4) Start Claude Code HERE (in your repo):
 claude
@@ -82,7 +84,7 @@ Homework 2 — consistently throughout.)
 
 > **If DevOps fights you** (permissions, tenant policy, anything): **don't burn
 > lab time on it.** The fallback is one command from the same parent folder —
-> `mkdir <initials>-volume-service && cd <initials>-volume-service && git init`
+> `mkdir <initials>-volume-service && cd <initials>-volume-service && git init -b main`
 > — a plain local repo (it's *outside* the course repo, so `git init` is fine
 > here). Everything below works identically except the pushes; we sort DevOps
 > access before Session 5.
@@ -99,10 +101,11 @@ python3 -c "import sqlite3; print(sqlite3.connect('../us-energy-sdlc-training/da
 **Keep that legacy output on screen** — it is your reconciliation anchor all
 session, and you'll check the agent's tests against it.
 
-> **Ground rule: the course repo is read-only reference today.** The agent may
-> read its `data/` folder (the database, the dictionary, `vol_report.py`) and
-> nothing else over there — in particular **not `sessions/session-5/`** (next
-> week's folder; peeking at it skips the only part that transfers).
+> **Ground rule: the course repo is read-only reference today.** The only
+> course-repo path the agent may read is
+> **`../us-energy-sdlc-training/data/`** (the database, the dictionary,
+> `vol_report.py`) — never `../us-energy-sdlc-training/sessions/session-5/`
+> (next week's folder; peeking at it skips the only part that transfers).
 
 ---
 
@@ -285,7 +288,8 @@ us-energy-volume-rules skill. The plan must include:
    ../us-energy-sdlc-training/data/us_energy.sqlite (the course repo sits next
    to this one). Next week this service runs from a different folder — the env
    var is what makes that a non-event.
-4. LOGGING: every run writes a separate log file (logs/run-<timestamp>.log) with
+4. LOGGING: every run writes a separate log file (logs/run-<timestamp>.log —
+   timestamp precise enough that two runs in the same second never collide) with
    one deterministic, diffable line per output row — not just stdout. Two runs
    must be comparable with a diff.
 5. A thin CLI that CALLS the service (a consumer, not the service) and writes
@@ -312,6 +316,12 @@ This is the loop running at its natural speed — your job is the approvals
 (**Ctrl+E** anything you're unsure of) and watching for one thing: if it starts
 writing `service.py` *before* the failing test run exists, stop it and point at
 the plan.
+
+> **If it stalls** (stops after the tests, or asks what to do next), paste this
+> and it keeps moving:
+> *"Continue from the approved plan. Run the failing tests if they haven't run,
+> then implement service.py, run pytest, and iterate until green. Ask me only
+> for permissions, or if the evidence contradicts the spec."*
 
 **When it lands on green: read the tests** (5 quiet minutes). They are your spec,
 executable — the contract fields, the invariants, the anchors. If a test asserts
@@ -381,6 +391,15 @@ must now include lift_count) and add one anchor for it, then implement, then run
 to green. Then run the CLI again and COMPARE the new run log with the previous
 run's log: show me that every existing physical and taxable value is identical
 line by line, and that only lift_count is new. Report exactly what you compared.
+```
+
+**The check you can run yourself** (the new field makes every row line differ,
+so normalize it away before diffing — existing values must be byte-identical):
+
+```bash
+diff <(grep '^row ' logs/<old-run>.log) \
+     <(grep '^row ' logs/<new-run>.log | sed -E 's/ lift_count=[0-9]+//')
+# no output = nothing moved; then eyeball the new field separately
 ```
 
 Two things to notice while it works:

@@ -12,8 +12,8 @@ lets parallel agents extend them at the same time in Session 5).
 ## Run it
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt   # add --user --break-system-packages if pip complains
+export DB_PATH=../../data/us_energy.sqlite      # run from sessions/session-5/
 uvicorn app:app --reload
 # open http://localhost:8000
 ```

@@ -11,8 +11,8 @@ renders what comes back. That seam — the service's contract — is what lets y
 parallel agents) build the app and the data layer independently.
 
 Run:
-    python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\\Scripts\\activate
-    pip install -r requirements.txt
+    python3 -m pip install -r requirements.txt
+    export DB_PATH=../../data/us_energy.sqlite   # when running from sessions/session-5/
     uvicorn app:app --reload      # then open http://localhost:8000
 """
 import os

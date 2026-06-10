@@ -30,8 +30,10 @@ import os
 import sqlite3
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-# First existing path wins — works whether this file sits in sessions/session-5/
-# or one level deeper in sessions/session-5/starter/.
+# The DB_PATH environment variable wins (the course contract: paths are
+# configurable, never hard-coded). Otherwise, first existing candidate wins —
+# works whether this file sits in sessions/session-5/ or one level deeper in
+# sessions/session-5/starter/.
 _DB_CANDIDATES = [
     os.path.join(_HERE, "..", "..", "data", "us_energy.sqlite"),
     os.path.join(_HERE, "..", "..", "..", "data", "us_energy.sqlite"),
@@ -43,6 +45,9 @@ PROD_DYED_DIESEL = 6   # dyed off-road diesel    -> tax-exempt, exclude from TAX
 
 
 def _db_path() -> str:
+    env = os.environ.get("DB_PATH")
+    if env:
+        return os.path.abspath(env)
     for cand in _DB_CANDIDATES:
         if os.path.exists(cand):
             return os.path.abspath(cand)
@@ -87,7 +92,8 @@ def monthly_volumes(month: str | None = None, db_path=None) -> list[dict]:
         SELECT t.term_cd                                              AS terminal,
                strftime('%Y-%m', l.lift_ts)                          AS month,
                SUM(l.net_gal)                                        AS physical_gal,
-               SUM(CASE WHEN l.prod_cd <> ? THEN l.net_gal ELSE 0 END) AS taxable_gal
+               SUM(CASE WHEN l.prod_cd <> ? THEN l.net_gal ELSE 0 END) AS taxable_gal,
+               COUNT(*)                                              AS lift_count
         FROM lifts l
         JOIN terminals t ON t.term_id = l.term_id
         WHERE l.status <> ?          -- exclude voided / reversed tickets
@@ -111,6 +117,9 @@ def monthly_volumes(month: str | None = None, db_path=None) -> list[dict]:
                 "month": r["month"],
                 "physical_gal": round(r["physical_gal"] or 0),
                 "taxable_gal": round(r["taxable_gal"] or 0),
+                # Added by the Session-4 change request: how many qualifying
+                # tickets each row's totals came from (DAL 2025-08 = 184).
+                "lift_count": r["lift_count"],
             }
             for r in con.execute(sql.format(month_filter=month_filter), params)
         ]

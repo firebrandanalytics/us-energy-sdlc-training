@@ -29,6 +29,8 @@ One output row =
   month         str    "YYYY-MM"
   physical_gal  int    SUM(net_gal) over real movements
   taxable_gal   int    physical minus dyed off-road diesel (prod_cd 6)
+  lift_count    int    qualifying tickets behind the totals
+                       (added by the Session-4 change request)
 
 Functions that produce it:
   monthly_volumes(month=None) -> list[row]   # one month, or all months
@@ -38,6 +40,7 @@ Invariants a consumer can rely on:
   1. physical_gal >= taxable_gal >= 0     (taxable is a SUBSET of physical)
   2. exactly one row per (terminal, month)
   3. terminal resolves to a real terminal
+  4. lift_count >= 1 on every emitted row
 ```
 
 ### Why invariants matter
@@ -66,7 +69,7 @@ templates (HTML), and a little CSS. No JavaScript framework required.
 ### Install & run
 
 ```bash
-python3 -m pip install fastapi uvicorn jinja2
+python3 -m pip install fastapi uvicorn jinja2   # --user --break-system-packages if pip complains
 uvicorn app:app --reload                            # open http://localhost:8000
 ```
 

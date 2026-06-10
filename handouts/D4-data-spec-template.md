@@ -100,7 +100,7 @@ Every one of those is a decision that changes the number. If you don't make the 
 
 ## Definition of done
 <!-- One statement. "All acceptance criteria pass, the pipeline runs against
-     data/us_energy.sqlite producing correct physical and taxable monthly
+     the course database (from your Session-4 repo: ../us-energy-sdlc-training/data/us_energy.sqlite) producing correct physical and taxable monthly
      volumes by terminal, reconciliation to the legacy numbers is explained,
      and I've reviewed the output against this spec — not just that it ran." -->
 ```
@@ -144,7 +144,7 @@ Every one of those is a decision that changes the number. If you don't make the 
 >
 > **Anti-goals:** No `rack_prices`/revenue join; no RIN calculation; no dashboard — a clean CSV is the deliverable.
 >
-> **Definition of done:** All acceptance criteria pass; the pipeline runs against `data/us_energy.sqlite`; reconciliation to the legacy numbers is explained; I've reviewed the output against this spec.
+> **Definition of done:** All acceptance criteria pass; the pipeline runs against the course database (path configurable — `DB_PATH`); reconciliation to the legacy numbers is explained; I've reviewed the output against this spec.
 
 ---
 

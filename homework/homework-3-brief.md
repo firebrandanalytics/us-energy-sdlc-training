@@ -58,6 +58,7 @@ cd sessions/session-5                       # in the course repo
 cp ../../../<initials>-volume-service/service.py ./service.py        # adjust the path to YOUR repo
 cp ../../../<initials>-volume-service/test_service.py ./test_service.py 2>/dev/null || true
 python3 -m pip install fastapi uvicorn jinja2     # pytest you already have from Session 4
+# (if pip says "externally-managed-environment", add: --user --break-system-packages)
 ```
 
 Your service reads its database path from the **`DB_PATH`** environment variable
@@ -73,7 +74,7 @@ Confirm the service works from here:
 ```bash
 python3 -c "import service; print(service.monthly_volumes(service.months()[-1])[0])"
 # -> the top row for the latest month:
-#    {'terminal': 'ICT', 'month': '2025-12', 'physical_gal': 1359752, 'taxable_gal': 1192172}
+#    {'terminal': 'ICT', 'month': '2025-12', 'physical_gal': 1359752, 'taxable_gal': 1192172, 'lift_count': 164}
 ```
 
 Keep **D5 — Output Contract & Dashboard** open. It has the FastAPI quickstart and
@@ -96,7 +97,7 @@ Direct Claude Code to build it. A prompt that works:
 ```
 In this folder there's a service.py exposing monthly_volumes(month) and months(),
 which return clean volume rows by terminal (fields: terminal, month, physical_gal,
-taxable_gal). Build a minimal read-only FastAPI app, app.py, with ONE route GET /
+taxable_gal, lift_count). Build a minimal read-only FastAPI app, app.py, with ONE route GET /
 that shows a table of the latest month's volumes by terminal, rendered with a
 Jinja2 template. The app must call the service — it must NOT query the database
 itself. Keep it minimal: no month filter, no chart, no other routes. Use
