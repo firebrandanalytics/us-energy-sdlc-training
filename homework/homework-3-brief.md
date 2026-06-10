@@ -33,10 +33,13 @@ U.S. Energy · Volumes Dashboard
 Fuel volumes by terminal · 2025-12
 
 Terminal    Physical (net gal)    Taxable (net gal)
-DAL              1,491,203            1,352,889
-OMA              1,402,551            1,221,004
+ICT              1,359,752            1,192,172
+MSN              1,310,078            1,192,310
 ...
 ```
+
+(Those are the real top-2 for 2025-12 — if your service is right, your page should
+show exactly these.)
 
 The shape that matters: **`app.py` never touches the database.** It imports
 `service.py` and renders whatever the service returns. That seam — the output
@@ -52,8 +55,10 @@ session). Bring your Session 4 service in:
 ```bash
 cd sessions/session-5
 cp ../session-4/service.py ./service.py     # your service from Session 4
-python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
-pip install fastapi uvicorn jinja2
+cp ../session-4/test_service.py ./test_service.py 2>/dev/null || true   # bring the tests along
+python3 -m venv venv
+source venv/bin/activate                    # Windows Git Bash: source venv/Scripts/activate
+pip install fastapi uvicorn jinja2 pytest
 ```
 
 Confirm the service still works from here (the DB is at `../../data/` from
@@ -166,10 +171,32 @@ report.
 
 ---
 
+## Pre-work for Session 5 — Azure DevOps from the CLI (5 minutes, do not skip)
+
+Session 5 closes the loop on a **real Azure DevOps board**: your stories become
+work items, your Session 4 branch becomes a pull request, an agent reviews it,
+and the ticket gets closed. So that we don't spend session time on first-time
+auth, confirm the plumbing now:
+
+```bash
+az extension add --name azure-devops     # the DevOps plugin for the az CLI (once)
+az login                                 # browser sign-in with your work account
+az devops configure --defaults organization=https://dev.azure.com/<your-org>
+az devops project list -o table          # if this prints projects, you're ready
+```
+
+If `az` isn't installed, grab it first (<https://aka.ms/installazurecli>). If the
+last command errors on permissions, just note the error and bring it — we'll sort
+access patterns (own repo vs. shared repo + your branch) at the top of Session 5.
+
+---
+
 ## What to Bring to Session 5
 
 - Your running `sessions/session-5/` dashboard (or the copied starter).
 - Your four reflection bullets.
+- `az devops project list` working (or the error message it gave you — see
+  pre-work above).
 
 Session 5 opens with a quick share-back, then we **extend this dashboard** — month
 filter, a chart, a terminal-detail page, a JSON API — by splitting the work across

@@ -52,13 +52,34 @@ Scan this list and check what you have in place for your project. Each row names
 
 ---
 
-## SKILL.md as a Correctness Device
+## Skills as a Correctness Device
+
+A **skill** is a folder holding a `SKILL.md` the agent loads on demand: **YAML
+frontmatter** (a `name`, and a one-line `description` that tells the agent *when
+to reach for it*), then the knowledge as plain markdown. Claude Code discovers
+them in your repo's `.claude/skills/` folder:
+
+```
+.claude/skills/us-energy-volume-rules/SKILL.md
+
+---
+name: us-energy-volume-rules
+description: Verified rules for the fuel-lifts dataset — code meanings,
+  measure definitions, reconciliation anchors. Use when computing, reviewing,
+  or testing volume numbers.
+---
+# US Energy volume rules
+...the rules, one page, verified against the data...
+```
 
 | Pattern | What it removes from the agent | Concrete example |
 |---------|-------------------------------|-----------------|
-| SKILL.md for a recurring procedure | Agent doesn't have to reconstruct the procedure from memory or source code | `SKILL.md/add-jurisdiction.md` lists every step, including the DB insert, seed update, and test check |
-| Decision trees in SKILL.md | Agent follows your logic rather than guessing at branch conditions | "If the query hard-codes jurisdiction codes, update the list. If it reads from the table, no change needed." |
-| Verification steps in SKILL.md | Agent confirms completion against concrete criteria | "Run `GET /trips/summary` — confirm new jurisdiction appears in the response." |
+| A skill for domain rules | Agent doesn't re-derive (or hallucinate) hard-won facts | `us-energy-volume-rules`: the code meanings, the physical-vs-taxable asymmetry, the reconciliation anchors — your Session 4 build |
+| Decision trees in the skill | Agent follows your logic rather than guessing at branch conditions | "If the measure is taxable, additionally exclude the tax-exempt product. If physical, keep it." |
+| Verification steps in the skill | Agent confirms completion against concrete criteria | "Reconcile 2025-08 against the legacy script to the gallon before reporting done." |
+
+The test of a good skill: **a fresh agent session answers your domain question
+correctly without being told anything** — because it loaded the skill.
 
 ---
 

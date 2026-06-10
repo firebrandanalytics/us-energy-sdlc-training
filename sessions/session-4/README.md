@@ -1,13 +1,17 @@
-# Session 4 — From Vague Ask to a Working Service
+# Session 4 — From Vague Ask to a Shipped Service
 
 U.S. Energy AI Software-Development Training · Session 4 of 5 · 2 hours, online
 
-**Theme: turning a fuzzy request into a specification the agent can build against
-— then building it as a clean, reusable *service*.** Session 3 was about *reading*
-what you didn't write. This session turns comprehension into construction: you take
-a vague stakeholder ask, sharpen it into a real spec, direct the agent to lift the
-true business rules out of the crusty legacy script and the ambiguous schema, and
-build a clean Python **service** — a data layer something else can call.
+**Theme: run the real software-development loop — spec, stories, tests-first,
+plan, build, validate, ship — with the agent doing the labor and you directing.**
+Session 3 was about *reading* what you didn't write. This session turns
+comprehension into construction the way a real team does it: take a vague
+stakeholder ask, sharpen it into a spec with an output contract, capture your
+Homework-2 knowledge as a **skill** the agent loads, slice the work into **user
+stories**, write the **tests first**, plan, build a clean Python **service** until
+the tests are green, validate it against the data, and **commit it with a real
+message and a PR description**. Session 5 finishes the loop: the Azure DevOps
+board, parallel agents, an unbiased review, the merge, the closed ticket.
 
 That last word is the pivot of the back half of the course. You're not building a
 one-off script that prints a number and exits. You're building a **service**: an
@@ -50,33 +54,41 @@ You'll also use, from elsewhere in the repo:
    by terminal"* — and see why, as written, it isn't buildable.
 2. **Sharpen it into a spec — including the output contract.** Pin the four things
    that decide whether the numbers are right (**grain, filters/exclusions, units,
-   edge cases**) *and* the shape of one output row — because the dashboard you
-   build next consumes exactly that shape.
-3. **Extract the real rules.** Direct the agent to lift the actual business logic
-   out of `vol_report.py` and the schema — distrusting the comments while it does
-   it (the Session 3 skill, applied).
-4. **Plan before building.** Hand the spec to planning mode; review and approve a
-   step-by-step plan before any code is written.
-5. **Build the service.** A clean `service.py` that *returns* clean monthly volumes
-   (it doesn't just print them) — you directing, the agent executing.
-6. **Review like a new engineer's PR.** Check the output against the spec, and
-   reconcile against the legacy numbers.
+   edge cases**) *and* the shape of one output row — the dashboard you build next
+   consumes exactly that shape, and your tests encode it.
+3. **Capture your Homework-2 knowledge as a skill.** A real `SKILL.md` (YAML
+   frontmatter + a page of verified rules) at `.claude/skills/` that the agent —
+   any agent, in any future session — loads automatically. Tribal knowledge,
+   made durable.
+4. **Slice the work into user stories** with acceptance criteria a test can check.
+   (In Session 5 these become Azure DevOps work items — one parallel agent each.)
+5. **Plan before building.** Hand everything to planning mode; the plan must put
+   the **tests first**. Review and approve before any code is written.
+6. **Red → green.** The agent writes `test_service.py` (failing), then builds
+   `service.py` until the tests pass — and proves it against the database and the
+   legacy numbers before claiming done.
+7. **Ship it.** A branch, agent-written commit messages that say *why*, and a PR
+   description with the test evidence — the input to Session 5's review-and-merge.
 
 ---
 
 ## What you'll leave with
 
-- A **sharpened spec** for the monthly-volume rollup, including a written **output
-  contract** (the row shape your app will rely on).
-- A **running `service.py`** that returns physical and taxable volume correctly,
-  reconciled against the legacy script for a known month — and that you can call
-  from a three-line script or, next, from a web app.
-- The habit that makes all of this work: **decide the ambiguous things in writing
-  before the agent decides them for you.**
+- A **sharpened spec** with a written **output contract** (the row shape your app
+  — and your tests — rely on).
+- A **skill** (`.claude/skills/us-energy-volume-rules/`) any agent loads — your
+  HW2 dossier, made operational.
+- **`stories.md`** — the work, sliced into checkable pieces.
+- A **green test suite and a running `service.py`** that returns reconciled
+  physical and taxable volume — built tests-first.
+- A **commit and a PR description** ready for Session 5's review-merge-close.
+- The habit that makes all of it work: **decide the ambiguous things in writing
+  before the agent decides them for you — and make the agent show evidence
+  before it says "done."**
 
-You don't need to finish everything today. A correct, reconciled service that
-returns physical and taxable volume, plus a clear contract, is the goal. The RIN
-measure is a stretch; the dashboard comes next.
+You don't need to finish everything today — the loop deliberately spills into
+Session 5. A green, reconciled service with its tests and a real commit is the
+complete slice; the RIN measure is a stretch; the dashboard comes next.
 
 ---
 

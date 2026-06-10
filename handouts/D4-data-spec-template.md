@@ -47,12 +47,14 @@ Every one of those is a decision that changes the number. If you don't make the 
      "Gallons, temperature-corrected: use net_gal, NOT gross_gal, because
      volume reporting standardises to 60°F."
      If any legacy scaling factor exists, say whether it applies (here: it
-     does NOT — the RVO/'stored in hundreds' scaling is dead code). -->
+     does NOT — the 'stored in hundreds' scale-up comment is dead code; sum
+     gallons as-is). -->
 
 ## Filters / Exclusions
 <!-- Every row that must be dropped, and WHY (the intent, not just the code).
      - Exclude status = 8 (void/reversed) -> count only real transactions.
-     - Exclude mode = 8 (book adjustment, non-physical) -> physical volume only.
+     - Exclude mode = 8 (book adjustment, non-physical — the S3 open question,
+       since confirmed with the feed owner) -> physical volume only.
      - For TAXABLE only: also exclude prod_cd = 6 (dyed/off-road, tax-exempt).
      State which filters apply to which measure -- they differ here. -->
 
@@ -120,7 +122,7 @@ Every one of those is a decision that changes the number. If you don't make the 
 >
 > **Measures:** Physical = `SUM(net_gal)` over qualifying rows. Taxable = `SUM(net_gal)` over the taxable subset.
 >
-> **Units:** Gallons, temperature-corrected — `net_gal`, not `gross_gal`. No legacy scaling (the "stored in hundreds" / `RVO` scaling is dead code, do not apply it).
+> **Units:** Gallons, temperature-corrected — `net_gal`, not `gross_gal`. No legacy scaling (the "stored in hundreds" scale-up comment is dead code, do not apply it). The `RVO` constant is a different problem — it's live code in the RIN measure with a stale value; if you build RIN, take the factors from the `rin_transactions` ledger instead.
 >
 > **Filters / Exclusions:**
 > - Both measures: exclude `status = 8` (void/reversed) and `mode = 8` (book adjustment, non-physical).
