@@ -49,7 +49,14 @@ source venv/bin/activate            # Windows Git Bash: source venv/Scripts/acti
 pip install pytest                  # required today — we write tests FIRST
 ```
 
-(No other packages — `sqlite3` ships with Python. FastAPI comes in Homework 3.)
+(No other packages — `sqlite3` ships with Python. FastAPI comes in Homework 3.
+If `python3` isn't found on your machine, use `py -3` or `python` — whichever
+worked for you in Homework 2 — consistently throughout.)
+
+> **One ground rule for the whole session:** until your Session 4 commit exists,
+> **don't open or let the agent read anything under `sessions/session-5/`** —
+> that's next week's folder, and peeking at it skips the only part that
+> transfers.
 
 ### Confirm the database opens from here
 
@@ -114,6 +121,9 @@ answers — that's why we did it.
 Open **`handouts/D4-data-spec-template.md`** and fill it in. D4 forces the four
 things that decide whether the numbers are right — **grain, filters/exclusions,
 units, edge cases** — into the open. Use **C7** for the surrounding sections.
+(D4 ends with a worked example — **draft your own answers from your dossier
+first**, then compare. Copying the example skips the decision-making, which is
+the exercise.)
 
 Then add the section a one-off script wouldn't need but a *service* must have —
 the **output contract** (the shape of one returned row; **D5** is the card):
@@ -176,10 +186,19 @@ long (an agent skims; a page beats five). One thing to add if the agent doesn't:
 and record it that way — *flag the unknown, get it confirmed by a human, then
 write down the confirmed fact*. That's the normal arc for tribal knowledge.
 
-**Prove it loads:** start a fresh Claude Code session at the repo root and ask
-*"what do you know about computing volumes from this dataset?"* — it should answer
-from your skill. That fresh-session test is exactly why this matters: **in Session
-5, agents that have never seen your dossier will build on these rules.**
+**Prove it loads — with specifics, not vibes.** Start a fresh Claude Code session
+at the repo root and ask:
+
+> Read only `.claude/skills/us-energy-volume-rules/SKILL.md`. Summarize the
+> monthly volume rules from that skill — including the exact status / mode /
+> prod_cd codes and which measures exclude each. If you can't name all three
+> codes and their scope, say the skill didn't load.
+
+The bar: it names **status 8 and mode 8 (excluded from every measure)** and
+**prod_cd 6 (excluded from taxable only)** — facts that live in your skill's
+*body*, not its description, so a generic answer can't fake it. That fresh-session
+test is exactly why this matters: **in Session 5, agents that have never seen your
+dossier will build on these rules.**
 
 > If your HW2 dossier is thin, run the extraction first and feed *that* to the
 > skill prompt: *"Read ../../data/vol_report.py. Treat the code's behavior as
@@ -282,6 +301,14 @@ Approve only when the plan is concrete enough that you'd trust the build.
 
 ### 5a. Red: write the tests (~10 min)
 
+> **STOP — get the real anchors first.** Run
+> `( cd ../../data && python3 vol_report.py 2025-08 )` **now** and keep that exact
+> output in front of you. The test prompt below has the agent copy those values
+> in — if you skip the run, the agent will *invent* plausible numbers, and every
+> step after that converges on a confidently wrong answer. (And use the integers
+> the script **prints** — don't recompute anchors with SQLite's `ROUND()`, which
+> rounds differently and lands one gallon off on some terminals.)
+
 Exit plan mode and have it write **only** the tests:
 
 ```
@@ -349,6 +376,10 @@ That's normal and it's the work. Read the disagreement with Claude Code:
   `gross_gal` instead of `net_gal` (~1–1.5% high and *looks* fine).
 - **Taxable off:** the dyed-diesel asymmetry — dropped from both measures, or
   neither.
+- **Off by exactly one gallon on a terminal or two:** a rounding-method mismatch —
+  SQLite's `ROUND()` rounds half away from zero; the legacy script accumulates
+  floats and rounds in Python. Sum raw in SQL, round in Python, and compare to the
+  numbers the legacy script *prints*.
 - **Slow query:** `EXPLAIN QUERY PLAN`; if it shows `SCAN lifts`, the month filter
   is probably wrapped in a function — rewrite to the range, and use an index on
   the timestamp in *your* copy: `CREATE INDEX idx_lifts_ts ON lifts(lift_ts);`

@@ -66,7 +66,8 @@ Confirm the service still works from here (the DB is at `../../data/` from
 
 ```bash
 python3 -c "import service; print(service.monthly_volumes(service.months()[-1])[0])"
-# -> a row dict, e.g. {'terminal': 'DAL', 'month': '2025-12', ...}
+# -> the top row for the latest month:
+#    {'terminal': 'ICT', 'month': '2025-12', 'physical_gal': 1359752, 'taxable_gal': 1192172}
 ```
 
 Keep **D5 — Output Contract & Dashboard** open. It has the FastAPI quickstart and
