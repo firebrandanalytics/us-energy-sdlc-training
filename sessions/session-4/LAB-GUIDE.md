@@ -18,7 +18,7 @@ vague ask → spec + contract → capture knowledge (a skill) → stories ON THE
         → plan (tests first) → approve, and let it build to green
         → validate: tests + the run log + the database
         → a change request lands → prove nothing broke (compare the logs)
-        → documentation → ship: repo, branch, commit, PR
+        → documentation → ship: commit, push, PR
         → [Session 5: clean-context review, merge, close the tickets, in parallel]
 ```
 
@@ -34,50 +34,70 @@ teammate. The building is fast; the understanding is the job.
 
 ---
 
-## Environment
+## Environment — your own repo, next to the course repo
 
-You will work in **`sessions/session-4/`** (this folder). From here, the committed
-database is at **`../../data/us_energy.sqlite`**.
+Today you build in **your own repository**, not inside the course repo. Two git
+repos, side by side — never one inside the other:
 
-### Set up (you did most of this in the pre-session email)
+```
+<some folder>/
+  us-energy-sdlc-training/        ← the course repo (READ-ONLY reference today)
+  <initials>-volume-service/      ← YOUR repo — everything you build lives here
+```
+
+You'll **start Claude Code inside your repo**. It can still *read* the course
+repo next door (approve the read when it asks — that's our data); it *writes*
+only in yours.
+
+### Set up (the az pieces were the pre-session email)
 
 ```bash
-cd sessions/session-4
+# 0) DevOps plumbing (from the email — one minute if already done):
+az extension add --name azure-devops
+az login
+az devops configure --defaults organization=https://dev.azure.com/<your-org> project=<your-project>
+
+# 1) From the folder that CONTAINS your course clone — create + clone YOUR repo:
+cd <the folder containing us-energy-sdlc-training>
+az repos create --name <initials>-volume-service --query "remoteUrl" -o tsv
+git clone <the URL it printed>            # "cloned an empty repository" = correct
+cd <initials>-volume-service
+
+# 2) A venv + pytest, inside YOUR repo:
 python3 -m venv venv
 source venv/bin/activate            # Windows Git Bash: source venv/Scripts/activate
 pip install pytest
+
+# 3) Start Claude Code HERE (in your repo):
+claude
 ```
 
 (If `python3` isn't found, use `py -3` or `python` — whichever worked for you in
 Homework 2 — consistently throughout.)
 
-**Azure DevOps** (also from the pre-session email — takes one minute if done):
-
-```bash
-az extension add --name azure-devops        # once
-az login                                    # browser sign-in
-az devops configure --defaults organization=https://dev.azure.com/<your-org> project=<your-project>
-az boards work-item list --top 1 -o table   # any output (even "no items") = you're in
-```
-
 > **If DevOps fights you** (permissions, tenant policy, anything): **don't burn
-> lab time on it.** Note the exact error and keep going — every DevOps step below
-> has a 30-second local fallback, and we sort access before Session 5.
+> lab time on it.** The fallback is one command from the same parent folder —
+> `mkdir <initials>-volume-service && cd <initials>-volume-service && git init`
+> — a plain local repo (it's *outside* the course repo, so `git init` is fine
+> here). Everything below works identically except the pushes; we sort DevOps
+> access before Session 5.
 
-### Confirm the database and the legacy script
+### Confirm the database and the legacy script (from inside your repo)
 
 ```bash
-python3 -c "import sqlite3; print(sqlite3.connect('../../data/us_energy.sqlite').execute('SELECT COUNT(*) FROM lifts').fetchone())"
+python3 -c "import sqlite3; print(sqlite3.connect('../us-energy-sdlc-training/data/us_energy.sqlite').execute('SELECT COUNT(*) FROM lifts').fetchone())"
 # -> (50025,)
-( cd ../../data && python3 vol_report.py 2025-08 )    # created in HW2; listing is in homework/homework-2-brief.md if missing
+( cd ../us-energy-sdlc-training/data && python3 vol_report.py 2025-08 )
+# (you created vol_report.py in HW2; the listing is in the course repo's homework/homework-2-brief.md if missing)
 ```
 
 **Keep that legacy output on screen** — it is your reconciliation anchor all
 session, and you'll check the agent's tests against it.
 
-> **One ground rule for the whole session:** until your Session 4 commit exists,
-> **don't open or let the agent read anything under `sessions/session-5/`** —
-> that's next week's folder, and peeking at it skips the only part that transfers.
+> **Ground rule: the course repo is read-only reference today.** The agent may
+> read its `data/` folder (the database, the dictionary, `vol_report.py`) and
+> nothing else over there — in particular **not `sessions/session-5/`** (next
+> week's folder; peeking at it skips the only part that transfers).
 
 ---
 
@@ -100,7 +120,7 @@ the point of the dossier. So don't hand-craft a spec; have the agent assemble it
 *from* your decisions, and spend your minutes **checking** it:
 
 ```
-Here is my Homework 2 intent dossier for ../../data/vol_report.py:
+Here is my Homework 2 intent dossier for the legacy script (it lives in the course repo at ../us-energy-sdlc-training/data/vol_report.py):
 <paste the relevant parts>
 
 Draft SPEC.md in this folder from it, using the D4 shape — grain, filters/
@@ -162,12 +182,13 @@ body-only facts a generic answer can't fake.
 
 ---
 
-## Step 3 — Stories on the board · the repo · your branch (~10 min)
+## Step 3 — Stories on the board · foundation on main · your branch (~10 min)
 
 A spec says what *right* means; **stories** slice it into shippable, checkable
 work — and today they go on the **real Azure DevOps board**, because that's
-where work lives at U.S. Energy. Then the work gets a *home* — repo and branch —
-**before any code exists**, because that's the order real work happens in.
+where work lives at U.S. Energy. Then everything so far lands on `main` as the
+**foundation commit**, and the build gets its **story branch** — all before any
+code exists, because that's the order real work happens in.
 
 **First, draft them:**
 
@@ -201,33 +222,31 @@ each ID back into stories.md next to its story.
 Note your **service story's work-item ID** — a change request is going to land on
 it later, and Session 5 closes it.
 
-**Now the repo and the branch.** One GitHub habit to unlearn here: in Azure
-DevOps, work items don't live *inside* a repo (the way GitHub issues do) — they
-live at the **project** level, and get tied to your repo through **branch and
-pull-request links**. So: repo first, then a branch named for your story, and the
-linkage builds itself from there.
+**Now the foundation commit and the branch.** (One GitHub habit to unlearn: in
+Azure DevOps, work items don't live *inside* a repo the way GitHub issues do —
+they live at the **project** level, and get tied to your repo through **branch
+and pull-request links**. The branch you're about to make, named for your story,
+is half of that linkage; Session 5's PR is the other half.)
 
 ```
-Set up my repo and working branch:
-1. Create a repo for me IN AZURE DEVOPS: az repos create --name
-   <initials>-volume-service. That command creates it server-side — do NOT run
-   git init anywhere on disk; we keep working in this existing clone, which is
-   already a git repo.
-2. Add the new repo to this clone as a remote named "devops" and push main to it.
-3. Create and switch to a branch named story/<my-service-story-ID>-volume-service
-   and push that too.
-Show me the remote URL and the branch when done.
+Lay the project foundation on main, then cut the story branch:
+1. Write README.md for this repo: what the volumes service is, plus a short
+   "working with Azure DevOps from the CLI" section — install the extension
+   (az extension add --name azure-devops), az login, az devops configure
+   --defaults — so a teammate can clone and work the board.
+2. Write a .gitignore: venv/, __pycache__/, logs/, .env, *.sqlite.
+3. Commit everything so far on main — README, .gitignore, SPEC.md, stories.md,
+   and the .claude/skills folder — with a sensible message, and push main.
+4. Create and switch to branch story/<my-service-story-ID>-volume-service and
+   push it. The build happens there.
 ```
 
-> **One repo on disk, ever.** The "new repo" lives in Azure DevOps; locally you
-> stay in your course clone (one `.git`, at the repo root). If you ever find a
-> second `.git` folder inside it — someone ran `git init` in a subfolder — that's
-> a repo nested inside a repo, and it *will* cause trouble (commits landing in
-> the wrong place, the outer repo refusing to track the folder). Fix: delete the
-> **inner** `.git` folder only, e.g. `rm -rf sessions/session-4/.git`.
-
-Everything you build from here happens on that branch — and lands on the board's
-radar the moment the PR links it to your story.
+> **Why this shape:** `main` carries the project's scaffolding and knowledge;
+> the **story branch** carries the change. When Session 5's PR merges the branch,
+> the diff *is* the story — nothing more, nothing less. (And your repo stays a
+> **sibling** of the course repo — if a `.git` ever shows up nested inside
+> another repo, something ran `git init` in the wrong place: delete the inner
+> `.git` only and re-stage.)
 
 > **Fallback (no DevOps yet):** `stories.md` *is* the stories artifact, and
 > `git switch -c story/volume-service` gives you the same branch locally — the
@@ -250,12 +269,17 @@ us-energy-volume-rules skill. The plan must include:
    The tests encode the output contract (field names and types), the invariants
    (physical >= taxable >= 0; one row per terminal-month), and the exact 2025-08
    reconciliation anchors — take them from the printed output of
-   "cd ../../data && python3 vol_report.py 2025-08", not from memory.
+   "cd ../us-energy-sdlc-training/data && python3 vol_report.py 2025-08", not from memory.
 2. The functions — monthly_volumes(month) and months() — and exactly what each
    RETURNS (list of dicts in the contract shape).
 3. The exact SQL for physical and taxable: every filter named, the gallon column
    named, the month bounded by a RANGE on lift_ts (never substr/strftime around
    the column).
+3b. The DB path is CONFIGURABLE, not hard-coded: read it from a DB_PATH
+   environment variable, defaulting to
+   ../us-energy-sdlc-training/data/us_energy.sqlite (the course repo sits next
+   to this one). Next week this service runs from a different folder — the env
+   var is what makes that a non-event.
 4. LOGGING: every run writes a separate log file (logs/run-<timestamp>.log) with
    one deterministic, diffable line per output row — not just stdout. Two runs
    must be comparable with a diff.
@@ -412,7 +436,7 @@ Ship today's work on our story branch:
    commit: an imperative subject naming the story, and a body with the WHY (the
    decisions) and the EVIDENCE (tests green; reconciles 2025-08 to the gallon;
    change verified by run-log comparison).
-3. After I approve the message: commit, and push the branch to the devops remote.
+3. After I approve the message: commit, and push the branch (origin is your repo).
 4. Draft PR.md: the pull-request description — title, summary of decisions, the
    evidence, and the work items it touches.
 ```
@@ -474,14 +498,14 @@ decisions.
 | Elapsed | What's happening |
 |---:|---|
 | 0–15 | Share-back + the walkthrough of Steps 1–4 |
-| **15–55** | **Work block 1 — Steps 1–4** (~40 min): spec from your dossier (~4) → the skill (~6) → stories + board + repo + branch (~10) → plan: read, push back, approve, let it run to green (~15) |
+| **15–55** | **Work block 1 — Steps 1–4** (~40 min): spec from your dossier (~4) → the skill (~6) → stories + board + foundation commit + branch (~10) → plan: read, push back, approve, let it run to green (~15) |
 | 55–60 | **Break** (5 min) |
 | 60–65 | Walkthrough of Steps 5–8 |
 | **65–105** | **Work block 2 — Steps 5–8** (~10 min each): validate (tests + log ↔ DB) → the change request (ticket comment, log-vs-log diff) → ARCHITECTURE.md read → ship (approved commit, push, PR.md) |
 | 105–115 | The conversation (how did that actually feel?) |
 | 115–120 | Homework 3 |
 
-**Pace markers, block 1:** spec + skill done by ~25 · board + repo + branch by
+**Pace markers, block 1:** spec + skill done by ~25 · board + foundation + branch by
 ~35 · plan approved and flowing by ~45 · green by ~55. **Block 2:** validated by
 ~75 · change landed by ~85 · docs read by ~95 · shipped by ~105.
 

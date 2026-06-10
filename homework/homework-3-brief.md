@@ -49,20 +49,28 @@ contract you wrote in Session 4 — is the whole reason the app stays simple.
 
 ## Setup
 
-Work in **`sessions/session-5/`** (the dashboard lives where you'll extend it next
-session). Bring your Session 4 service in:
+Work in **`sessions/session-5/`** of the **course repo** (the dashboard lives
+where you'll extend it next session). Bring your Session 4 service over from
+*your* repo:
 
 ```bash
-cd sessions/session-5
-cp ../session-4/service.py ./service.py     # your service from Session 4
-cp ../session-4/test_service.py ./test_service.py 2>/dev/null || true   # bring the tests along
+cd sessions/session-5                       # in the course repo
+cp ../../../<initials>-volume-service/service.py ./service.py        # adjust the path to YOUR repo
+cp ../../../<initials>-volume-service/test_service.py ./test_service.py 2>/dev/null || true
 python3 -m venv venv
 source venv/bin/activate                    # Windows Git Bash: source venv/Scripts/activate
 pip install fastapi uvicorn jinja2 pytest
 ```
 
-Confirm the service still works from here (the DB is at `../../data/` from
-`sessions/session-5/`, same as Session 4):
+Your service reads its database path from the **`DB_PATH`** environment variable
+(that's why we made it configurable). From `sessions/session-5/` the course data
+is two levels up, so set it once per shell:
+
+```bash
+export DB_PATH=../../data/us_energy.sqlite
+```
+
+Confirm the service works from here:
 
 ```bash
 python3 -c "import service; print(service.monthly_volumes(service.months()[-1])[0])"
