@@ -209,12 +209,22 @@ linkage builds itself from there.
 
 ```
 Set up my repo and working branch:
-1. Create a repo for me: az repos create --name <initials>-volume-service
-2. Add it to this clone as a remote named "devops" and push main to it.
+1. Create a repo for me IN AZURE DEVOPS: az repos create --name
+   <initials>-volume-service. That command creates it server-side — do NOT run
+   git init anywhere on disk; we keep working in this existing clone, which is
+   already a git repo.
+2. Add the new repo to this clone as a remote named "devops" and push main to it.
 3. Create and switch to a branch named story/<my-service-story-ID>-volume-service
    and push that too.
 Show me the remote URL and the branch when done.
 ```
+
+> **One repo on disk, ever.** The "new repo" lives in Azure DevOps; locally you
+> stay in your course clone (one `.git`, at the repo root). If you ever find a
+> second `.git` folder inside it — someone ran `git init` in a subfolder — that's
+> a repo nested inside a repo, and it *will* cause trouble (commits landing in
+> the wrong place, the outer repo refusing to track the folder). Fix: delete the
+> **inner** `.git` folder only, e.g. `rm -rf sessions/session-4/.git`.
 
 Everything you build from here happens on that branch — and lands on the board's
 radar the moment the PR links it to your story.
