@@ -81,7 +81,7 @@ session, and you'll check the agent's tests against it.
 
 ---
 
-## Step 1 — Sharpen the vague ask into a spec (18 min)
+## Step 1 — The spec, drafted from your dossier (~4 min)
 
 ### The ask
 
@@ -95,42 +95,31 @@ ticket count? A book adjustment? Tax-exempt dyed diesel? Every one of those is a
 decision that **changes the number** — and what you don't decide, the agent
 decides for you.
 
-### Interrogate, then write
-
-Open Claude Code in this folder and have it surface the decisions first:
-
-```
-Read ../../data/vol_report.py, ../../data/DATA-DICTIONARY.md, and the schema of
-../../data/us_energy.sqlite (run: .schema lifts). I have a vague request: "clean
-monthly volumes by terminal." Before I write any spec or code, list every
-decision this ask leaves implicit, grouped: grain, filters/exclusions, units,
-edge cases. Do not propose a design yet.
-```
-
-Your Homework 2 dossier holds most of the answers — that's why we did it. Then
-fill in **`handouts/D4-data-spec-template.md`** (draft your own answers from your
-dossier **before** peeking at D4's worked example), and add the **output
-contract** (**D5** is the card):
+**Here's the thing: you already made these decisions — in Homework 2.** That was
+the point of the dossier. So don't hand-craft a spec; have the agent assemble it
+*from* your decisions, and spend your minutes **checking** it:
 
 ```
-One output row =
-  terminal      str    terminal display code, e.g. "DAL"
-  month         str    "YYYY-MM"
-  physical_gal  int    SUM(net_gal) over real movements
-  taxable_gal   int    physical minus dyed off-road diesel (prod_cd 6)
+Here is my Homework 2 intent dossier for ../../data/vol_report.py:
+<paste the relevant parts>
 
-Invariants the caller can rely on:
-  - physical_gal >= taxable_gal >= 0   (taxable is a subset of physical)
-  - exactly one row per (terminal, month)
+Draft SPEC.md in this folder from it, using the D4 shape — grain, filters/
+exclusions (per measure), units, edge cases — plus an OUTPUT CONTRACT section:
+the exact shape of one returned row (terminal str, month "YYYY-MM",
+physical_gal int, taxable_gal int) and the invariants a caller can rely on
+(physical_gal >= taxable_gal >= 0; exactly one row per terminal-month). Take
+every decision from my dossier; FLAG anything my dossier doesn't settle rather
+than deciding it yourself.
 ```
 
-> **The discipline:** if you can't fill in **Grain** and **Filters / Exclusions**
-> precisely, the ask is still vague. The contract becomes your tests, almost word
-> for word — and next week the dashboard reads exactly that shape.
+**Your read (2 minutes, four checks):** `net_gal` with the why · the two
+exclusions on *both* measures · dyed diesel **kept in physical, dropped from
+taxable** · the contract row shape (it becomes your tests, almost word for word).
+Fix anything off; don't polish. Move.
 
 ---
 
-## Step 2 — Capture what you know as a *skill* (10 min)
+## Step 2 — Capture what you know as a *skill* (~6 min)
 
 Your HW2 dossier lives in a doc only *you* will read. Turn it into a **skill** —
 a file the agent itself loads — and every future session (yours, and the parallel
@@ -173,7 +162,7 @@ body-only facts a generic answer can't fake.
 
 ---
 
-## Step 3 — Stories on the board · the repo · your branch (12 min)
+## Step 3 — Stories on the board · the repo · your branch (~10 min)
 
 A spec says what *right* means; **stories** slice it into shippable, checkable
 work — and today they go on the **real Azure DevOps board**, because that's
@@ -236,7 +225,7 @@ radar the moment the PR links it to your story.
 
 ---
 
-## Step 4 — Plan it, read the plan, approve — and let it run (12 min + the build)
+## Step 4 — Plan it, read the plan, approve — and let it run (~15 min, green included)
 
 Switch into planning mode (`claude --permission-mode plan`, or `Shift+Tab`).
 Plan mode means the agent **can read everything and touch nothing** — so think it
@@ -291,7 +280,7 @@ something your spec didn't say, one of them is wrong. Fix that now.
 
 ---
 
-## Step 5 — Validate: the tests, the log, and the database (8 min)
+## Step 5 — Validate: the tests, the log, and the database (~10 min)
 
 Green tests are necessary, not sufficient. Make the agent prove the run against
 the **real artifacts**:
@@ -324,7 +313,7 @@ compare to what the legacy script *prints*).
 
 ---
 
-## Step 6 — A change request lands (12 min)
+## Step 6 — A change request lands (~10 min)
 
 It always does. The desk replies:
 
@@ -369,7 +358,7 @@ numbers byte-identical, and the ticket carries the comment trail.
 
 ---
 
-## Step 7 — Documentation, while it's true (8 min)
+## Step 7 — Documentation, while it's true (~10 min)
 
 Docs written months later describe what someone *remembers*. Yours get written
 now, by the agent, from the actual artifacts — and your job is to **read them**.
@@ -400,7 +389,7 @@ python3 -m pydoc -w service        # writes service.html — open it in a browse
 
 ---
 
-## Step 8 — Ship it: commit + PR (8 min)
+## Step 8 — Ship it: commit + PR (~10 min)
 
 Your repo and branch have existed since Step 3 — now the work lands on them, as
 a reviewable unit:
@@ -468,22 +457,23 @@ Understanding the code you ship is not optional just because you didn't type it.
 
 ## How the session runs (two work blocks)
 
-We talk through the first half of the deck, then **you work Steps 1–4 in one
-block (~25–30 min)**. We reconvene for the second half of the deck, then **you
-work Steps 5–8 (~25–30 min)**. Then the debrief conversation.
+The agent's work in every step takes a minute or two — the step budgets below are
+mostly **your reading time**. Move briskly: your dossier already made the hard
+decisions.
 
 | Elapsed | What's happening |
 |---:|---|
-| 0–22 | Share-back, the loop, and the walkthrough of Steps 1–4 |
-| ~22–50 | **Work block 1 — Steps 1–4:** spec + contract → skill → stories on the board, repo + branch → plan read, approved, and the build flowing (most of you land on green inside this block) |
-| 50–62 | Reconvene: validate, the change request, docs, shipping |
-| ~62–92 | **Work block 2 — Steps 5–8:** validation evidence → the change (log-vs-log diff, ticket comment) → ARCHITECTURE.md read → commit approved + pushed, PR.md |
-| 92–105 | The conversation (how did that actually feel?) |
-| 105–110 | Homework 3 |
+| 0–15 | Share-back + the walkthrough of Steps 1–4 |
+| **15–55** | **Work block 1 — Steps 1–4** (~40 min): spec from your dossier (~4) → the skill (~6) → stories + board + repo + branch (~10) → plan: read, push back, approve, let it run to green (~15) |
+| 55–60 | **Break** (5 min) |
+| 60–65 | Walkthrough of Steps 5–8 |
+| **65–105** | **Work block 2 — Steps 5–8** (~10 min each): validate (tests + log ↔ DB) → the change request (ticket comment, log-vs-log diff) → ARCHITECTURE.md read → ship (approved commit, push, PR.md) |
+| 105–115 | The conversation (how did that actually feel?) |
+| 115–120 | Homework 3 |
 
-**Pace markers inside the blocks:** block 1 — spec by ~32, skill by ~40, board +
-branch by ~45, plan approved by ~50. Block 2 — validated by ~72, change landed by
-~82, docs read by ~88, shipped by ~92.
+**Pace markers, block 1:** spec + skill done by ~25 · board + repo + branch by
+~35 · plan approved and flowing by ~45 · green by ~55. **Block 2:** validated by
+~75 · change landed by ~85 · docs read by ~95 · shipped by ~105.
 
 **If you fall behind:** the slice that matters is *green, validated, committed*.
 The change beat and docs can compress; anything unfinished is Session 5's warm-up
