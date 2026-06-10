@@ -57,16 +57,23 @@ az extension add --name azure-devops
 az login
 az devops configure --defaults organization=https://dev.azure.com/<your-org> project=<your-project>
 
-# 1) From the folder that CONTAINS your course clone — create + clone YOUR repo:
-cd <the folder containing us-energy-sdlc-training>
+# 1) Go to the PARENT folder — the one the course clone sits INSIDE.
+#    Most terminals open inside the course repo, so usually this is just:
+cd ..
+ls
+#    ^ you should SEE "us-energy-sdlc-training" in that listing. If you don't,
+#      you're in the wrong place — never run the clone from inside the course
+#      repo, or you'll nest one repo inside another.
+
+# 2) Create YOUR repo in Azure DevOps, and clone it HERE — beside the course clone:
 az repos create --name <initials>-volume-service --query "remoteUrl" -o tsv
 git clone <the URL it printed>            # "cloned an empty repository" = correct
 cd <initials>-volume-service
 
-# 2) pytest (the one package today — install it once, no venv needed):
+# 3) pytest (the one package today — install it once, no venv needed):
 python3 -m pip install pytest
 
-# 3) Start Claude Code HERE (in your repo):
+# 4) Start Claude Code HERE (in your repo):
 claude
 ```
 
