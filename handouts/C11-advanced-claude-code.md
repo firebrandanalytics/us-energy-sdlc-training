@@ -28,22 +28,39 @@ sets it up for you (it writes the script and the setting). Docs:
 
 ## 2 · Agents on a clock — scheduled runs
 
-**What it is.** Two documented paths:
+**What it is.** Three shapes, least to most plumbing:
 
 - **`/schedule`** — recurring or one-off tasks on Anthropic's cloud
-  infrastructure ("routines"; manage at *claude.ai/code/routines*). Runs without
-  your machine on. *Research preview — expect change.*
+  infrastructure ("routines"; manage at *claude.ai/code/routines*). Runs
+  without your machine on. *Research preview — expect change.*
 - **Headless mode** — `claude -p "<prompt>" --permission-mode acceptEdits`
-  prints a result and exits, which means your ordinary OS scheduler (cron, Task
-  Scheduler) can run an agent like any other job. Stable, works anywhere.
+  prints a result and exits, so your ordinary OS scheduler (cron, Task
+  Scheduler) can run an agent like any other job. Stable, works anywhere — and
+  the agent will happily write its own crontab entry if you ask it to.
+- **Scheduled wake-ups inside a session** — ask Claude Code to check back on
+  something periodically and it can put itself on a clock; see *Scheduled
+  tasks* in the docs.
 
-**Why you'd bother.** Your Session 4 done-gate — *tests, reconcile, log ↔
-database* — is a prompt. Scheduled nightly against the volumes service, it's a
-monitor: silence when the numbers hold, a morning message when they drift.
-Drudge work you don't even have to start.
+**Why you'd bother — cadences we actually run:**
+
+- **The monitor.** Your Session 4 done-gate — tests, reconcile, log ↔ database
+  — is a prompt. Run nightly against the volumes service it's a monitor:
+  silence while the numbers hold, a morning message when they drift.
+- **The maintainer.** A weekly routine checks whether OpenAI, Anthropic, or
+  Google shipped a new SDK; when one lands, it upgrades the affected codebase,
+  runs the full test suite, fixes what the upgrade broke, and opens a PR. Not
+  "bump the version" — *prove it still works*. The human's whole job is
+  merging a green PR. (The same cadence keeps docs and diagrams current with
+  the code they describe.)
+- **The chief of staff.** Our most common pattern: several Claude Code
+  sessions working in parallel — one per tmux window — and one orchestrator
+  session that wakes on a cron, checks the others' progress, nudges the
+  stalled ones, and reports. Agents managing agents, with the same gates you'd
+  give a team.
 
 **First step.** Run your validation prompt once via `claude -p` and read the
-output; *then* think about a schedule. Docs: *Routines* and *Headless mode*.
+output; *then* put it on a clock. Docs: *Routines*, *Headless mode*,
+*Scheduled tasks*.
 
 ---
 
