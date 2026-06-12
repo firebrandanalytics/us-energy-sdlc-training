@@ -1,7 +1,14 @@
 # Homework #3 — Stand Up the Dashboard Starter
 
+> **Status (updated after Session 4):** the homework that matters is **finishing
+> the Session 4 lab's remaining steps** in your own repo — Session 5 is built
+> around continuing from wherever you are. This dashboard brief is now
+> **optional extra credit**: do it only once your loop is closed (PR merged,
+> tickets closed), and if you want still more after that, it continues in
+> `sessions/session-5/EXTRA-CREDIT.md`. Everything below works as written.
+
 **Assigned after:** Session 4 (From Vague Ask to a Working Service)
-**Due before:** Session 5
+**Due before:** Session 5 *(now optional — see status note above)*
 **Time budget:** 30–45 minutes (deliberately small)
 
 ---
@@ -13,13 +20,15 @@ volumes by terminal. Now put the smallest possible **web page** on top of it: a
 read-only dashboard with **one view**, a table of volumes by terminal.
 
 That's it. Skeleton plus one table. No month picker, no chart, no detail pages, no
-JSON API — those are what we build *together* in Session 5. This homework is
-intentionally light: the goal is that you arrive at Session 5 with something
-running, so we can spend the session **extending** it instead of bootstrapping it.
+JSON API — those are the **extra-credit extensions**
+(`sessions/session-5/EXTRA-CREDIT.md`). This brief is intentionally light: the
+goal is a running skeleton, so the extension work starts from something real
+instead of from bootstrapping.
 
-> **Why so small?** Session 5 is the capstone — splitting work across parallel
-> agents to grow this dashboard. You get far more out of that if the skeleton
-> already exists. Starting small here is the setup for going wide there.
+> **Why so small?** The extra-credit track splits the dashboard's growth across
+> parallel agents working against your service's contract. You get far more out
+> of that if the skeleton already exists. Starting small here is the setup for
+> going wide there.
 
 ---
 
@@ -133,7 +142,8 @@ that answer in Session 5 when two agents extend this in parallel.
 ## The Safety Net — You Will Not Be Blocked
 
 A working starter is committed at **`sessions/session-5/starter/`**. If you run out
-of time, get stuck, or your build won't run, you can still do the Session 5 lab:
+of time, get stuck, or your build won't run, you can still do the extra-credit
+extensions:
 
 ```bash
 cd sessions/session-5
@@ -169,8 +179,8 @@ After you finish, jot short answers:
 
 1. **Did it run, and do the numbers match your service?** One sentence.
 2. **The seam:** in your own words, what does keeping SQL out of `app.py` buy you?
-3. **One thing you'd want to add** to the dashboard — a feature you'll be glad we
-   build next session.
+3. **One thing you'd want to add** to the dashboard — a feature to pick first
+   from the extra-credit track.
 4. **One snag** — a moment the agent did something you had to correct, or a setup
    issue you hit (so we can clear it for the room).
 
@@ -201,15 +211,17 @@ Session 5. Nothing else in this homework depends on DevOps.
 
 ## What to Bring to Session 5
 
-- Your running `sessions/session-5/` dashboard (or the copied starter).
-- Your four reflection bullets.
+- Wherever you actually got to — Session 5's lab guide starts from your real
+  state, dashboard or no dashboard.
+- Your reflection bullets, if you did this.
 - `az devops project list` working (or the error message it gave you — see
   pre-work above).
 
-Session 5 opens with a quick share-back, then we **extend this dashboard** — month
-filter, a chart, a terminal-detail page, a JSON API — by splitting the work across
-parallel agents, all building against your service's contract. The cleaner your
-skeleton, the more the parallel build just clicks together.
+Session 5 opens with a share-back on finishing the Session 4 steps solo, then a
+30-minute work block to continue from your own rung — this dashboard included,
+if you're that far. The extensions (month filter, chart, detail page, JSON API)
+live on in `sessions/session-5/EXTRA-CREDIT.md`, split across parallel agents
+against your service's contract.
 
 ---
 

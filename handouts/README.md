@@ -15,7 +15,7 @@ Two families live here:
 
 ## Carry-over cards (C\*) — use as-is
 
-These six are the ones the course actively uses. They are tool/practice references and are not tied to the dataset.
+These seven are the ones the course actively uses. They are tool/practice references and are not tied to the dataset.
 
 | Card | What it's for | Used in |
 |---|---|---|
@@ -24,6 +24,7 @@ These six are the ones the course actively uses. They are tool/practice referenc
 | **C7 — AI-Ready Spec (Prompt) Template** | Turning any task into a structured spec the agent can execute | Sessions 2, 4 (general task spec) |
 | **C9 — Microsoft Graph CLI Quick Reference** | Reaching email / Teams / SharePoint from Claude Code | Session 2 |
 | **C10 — "What Good Looks Like" Review Rubric** | Reviewing AI-generated code before approving — correctness, hallucinated APIs, tests, security, scope | Sessions 4, 5 |
+| **C11 — Advanced Claude Code** | The power tools past the interactive session — custom status line, scheduled runs, `/loop` & `/goal`, subagents & orchestration. Concepts + first steps, no exercises | Session 5 (extra credit), after the course |
 | **CC — Claude Code Commands Card** | The ~20 highest-frequency commands, shortcuts, and approval keys | Every session |
 
 ---
