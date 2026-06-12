@@ -237,6 +237,12 @@ while the app is wrong?*
   terminal — keep it out of the data, add it in the template.)
 - **Make it real.** `requirements.txt`, a health route, a one-paragraph "how
   we'd deploy this internally" note.
+- **Test it like a user.** Your `test_app.py` never opened a browser — nothing
+  proves the chart renders, the dropdown filters, or the DAL link lands where
+  it should. How would you check those the way a user would? That's browser
+  automation: Playwright, written and run by the agent as plain test code, or
+  wired in via MCP — **C11 §5**, including the idea it leads to (one
+  natural-language test plan, executed against the API *or* the GUI).
 - **Then go meta — C11.** Re-run Move 2 as a `/agents`-defined reviewer, or put
   the reconcile check on a schedule. The handout has the map.
 

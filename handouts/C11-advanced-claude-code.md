@@ -1,7 +1,7 @@
 # C11 — Advanced Claude Code: The Power Tools
 
 **Concepts and pointers, not exercises.** Everything in the course so far ran in
-one interactive session: you ask, you read, you approve. These four features are
+one interactive session: you ask, you read, you approve. These five features are
 what's past that — and every one of them is the same discipline you already
 practice (gates, contracts, review), running with less of you in the room.
 Surfaces evolve quickly: treat this card as the map, and check `/help` and
@@ -92,6 +92,48 @@ wrong answers faster.
 **First step.** `/agents` → create a `code-reviewer` that loads your
 `us-energy-volume-rules` skill, and point it at your own PR. Docs: *Subagents*,
 *Agent view*, *Workflows*.
+
+---
+
+## 5 · The browser is a tool too — test it like a user
+
+**What it is.** Your dashboard tests call routes in-process — fast, but no
+browser ever opens, so nothing proves the chart renders or the dropdown
+actually filters. **Playwright** closes that gap, and two routes are equally
+acceptable:
+
+- **Directly, as code** (the way we use it ourselves): the agent installs it
+  like any package (`pip install playwright && playwright install chromium`),
+  writes a pytest that opens the page, picks a month, clicks DAL, and asserts
+  what a *user* would see — then runs it headless like any other test. No new
+  plumbing; this is Session 2's "Claude Code is also a shell," pointed at a
+  browser.
+- **Playwright MCP** (`claude mcp add playwright npx @playwright/mcp@latest`):
+  wires the browser in as a tool the agent drives step by step — navigate,
+  click, read, screenshot. Especially handy in Claude Desktop, or for
+  exploratory "watch it click around" debugging before you ask for durable
+  test code.
+
+There's also **Claude in Chrome** — the extension (`claude --chrome`) that
+drives the browser you're already logged into. GA on direct Anthropic plans
+but beta and Chrome/Edge-only: check your plan and your browser policy first.
+
+**Why you'd bother.** Half of what your team owns has a UI in front of it, and
+"click through it like a user" is currently a human's job — Move 3 of the
+extra credit is literally you, clicking. This makes that a test that runs
+without you.
+
+**The thought to leave with.** Your acceptance criteria were checkable all
+course. The step past that — one we're exploring ourselves — is writing the
+**test plan itself in natural language** (*"pick 2025-08, open DAL, the
+numbers match the service"*) and letting the agent execute the *same plan*
+against the JSON API or through the browser against the GUI. One plan, two
+surfaces: the plan becomes the artifact, and the executor is fungible. If that
+idea grabs you, you're ready for what comes after this course.
+
+**First step.** Ask the agent to write one Playwright test for your
+extra-credit dashboard's month filter and run it headless. Docs:
+*playwright.dev* · *code.claude.com/docs → MCP, Chrome*.
 
 ---
 
